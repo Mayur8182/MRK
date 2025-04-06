@@ -214,21 +214,27 @@ const CustomPieTooltip = ({ active, payload }: any) => {
 const processTreemapData = (data: any) => {
   const result: any[] = [];
   
+  if (!data || !Array.isArray(data)) {
+    return result;
+  }
+  
   data.forEach((category: any) => {
-    category.children.forEach((item: any) => {
-      result.push({
-        name: item.name,
-        size: item.size,
-        value: item.value,
-        fill: category.name === "Stocks" 
-          ? "#10B981" 
-          : category.name === "Bonds" 
-            ? "#6366F1" 
-            : category.name === "Alternatives" 
-              ? "#F59E0B" 
-              : "#8B5CF6"
+    if (category && category.children && Array.isArray(category.children)) {
+      category.children.forEach((item: any) => {
+        result.push({
+          name: item.name,
+          size: item.size,
+          value: item.value,
+          fill: category.name === "Stocks" 
+            ? "#10B981" 
+            : category.name === "Bonds" 
+              ? "#6366F1" 
+              : category.name === "Alternatives" 
+                ? "#F59E0B" 
+                : "#8B5CF6"
+        });
       });
-    });
+    }
   });
   
   return result;
