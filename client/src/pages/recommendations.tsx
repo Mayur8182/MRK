@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BackButton } from "@/components/ui/back-button";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -508,11 +509,14 @@ export default function Recommendations() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Investment Recommendations</h1>
-          <p className="text-muted-foreground">
-            Personalized investment suggestions based on your goals and portfolio
-          </p>
+        <div className="flex items-center gap-3">
+          <BackButton />
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Investment Recommendations</h1>
+            <p className="text-muted-foreground">
+              Personalized investment suggestions based on your goals and portfolio
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="h-8">

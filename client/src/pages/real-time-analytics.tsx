@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, BarChart3, DollarSign, Percent, TrendingUp, Activity } from 'lucide-react';
+import { BackButton } from '@/components/ui/back-button';
 import { format } from 'date-fns';
 
 export default function RealTimeAnalyticsPage() {
@@ -45,11 +46,14 @@ export default function RealTimeAnalyticsPage() {
       
       <div className="container py-6 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Real-Time Analytics</h1>
-            <p className="text-muted-foreground mt-1">
-              Live market data and portfolio performance tracking
-            </p>
+          <div className="flex items-center gap-3">
+            <BackButton />
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Real-Time Analytics</h1>
+              <p className="text-muted-foreground mt-1">
+                Live market data and portfolio performance tracking
+              </p>
+            </div>
           </div>
           
           <div className="flex items-center gap-4 mt-4 md:mt-0">

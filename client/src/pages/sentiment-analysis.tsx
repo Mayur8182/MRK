@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BackButton } from "@/components/ui/back-button";
 import { useQuery } from "@tanstack/react-query";
 import {
   AreaChart,
@@ -243,7 +244,10 @@ export default function SentimentAnalysis() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">News & Social Media Sentiment</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <BackButton />
+            <h1 className="text-3xl font-bold tracking-tight">News & Social Media Sentiment</h1>
+          </div>
           <p className="text-muted-foreground">
             AI-powered sentiment analysis from news, social media, and market data
           </p>

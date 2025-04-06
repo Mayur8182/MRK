@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
+import { BackButton } from "@/components/ui/back-button";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -331,6 +332,7 @@ export default function TaxHarvesting() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2">
+            <BackButton />
             <h1 className="text-3xl font-bold tracking-tight">Tax-Loss Harvesting</h1>
             <Badge variant="secondary" className="ml-2">
               <Calculator className="mr-1 h-3.5 w-3.5" />

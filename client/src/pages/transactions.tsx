@@ -6,6 +6,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { BackButton } from "@/components/ui/back-button";
 import {
   Table,
   TableBody,
@@ -142,7 +143,10 @@ export default function Transactions() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Transaction History</h2>
+        <div className="flex items-center gap-3">
+          <BackButton />
+          <h2 className="text-2xl font-bold tracking-tight">Transaction History</h2>
+        </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
             <Filter className="h-4 w-4 mr-2" />
