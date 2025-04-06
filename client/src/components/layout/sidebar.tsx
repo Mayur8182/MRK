@@ -97,10 +97,18 @@ export default function Sidebar() {
 
       <div className="p-4 border-t mt-auto">
         <div className="space-y-1">
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground" size="sm">
-            <Settings size={18} className="mr-3" />
-            Settings
-          </Button>
+          <Link href="/settings">
+            <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground" size="sm">
+              <Settings size={18} className="mr-3" />
+              Settings
+            </Button>
+          </Link>
+          <Link href="/profile-edit">
+            <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground" size="sm">
+              <Users size={18} className="mr-3" />
+              Profile
+            </Button>
+          </Link>
           <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground" size="sm">
             <HelpCircle size={18} className="mr-3" />
             Help & Support

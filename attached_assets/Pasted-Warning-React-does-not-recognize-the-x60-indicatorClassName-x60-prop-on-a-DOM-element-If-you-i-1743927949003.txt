@@ -1,0 +1,30 @@
+Warning: React does not recognize the &#x60;indicatorClassName&#x60; prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase &#x60;indicatorclassname&#x60; instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at div
+    at https://563aa040-f401-41f0-8b44-773875a84eca-00-eu5l35f273x9.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RLTE5R7I.js?v=2071e74f:41:13
+    at Provider (https://563aa040-f401-41f0-8b44-773875a84eca-00-eu5l35f273x9.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-progress.js?v=0deb34a2:30:15)
+    at https://563aa040-f401-41f0-8b44-773875a84eca-00-eu5l35f273x9.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-progress.js?v=0deb34a2:90:7
+    at _c (https://563aa040-f401-41f0-8b44-773875a84eca-00-eu5l35f273x9.riker.replit.dev/src/components/ui/progress.tsx:21:11)
+    at div
+    at div
+    at div
+    at _c9 (https://563aa040-f401-41f0-8b44-773875a84eca-00-eu5l35f273x9.riker.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://563aa040-f401-41f0-8b44-773875a84eca-00-eu5l35f273x9.riker.replit.dev/src/components/ui/card.tsx:20:11)
+    at InvestmentCard (https://563aa040-f401-41f0-8b44-773875a84eca-00-eu5l35f273x9.riker.replit.dev/src/components/dashboard/investment-card.tsx:22:42)
+    at div
+    at div
+    at Investments (https://563aa040-f401-41f0-8b44-773875a84eca-00-eu5l35f273x9.riker.replit.dev/src/pages/investments.tsx:69:24)
+    at Route (https://563aa040-f401-41f0-8b44-773875a84eca-00-eu5l35f273x9.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=6d1fe1cf:323:16)
+    at Switch (https://563aa040-f401-41f0-8b44-773875a84eca-00-eu5l35f273x9.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=6d1fe1cf:379:17)
+    at main
+    at div
+    at div
+    at Router
+    at QueryClientProvider (https://563aa040-f401-41f0-8b44-773875a84eca-00-eu5l35f273x9.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=956c3afb:2805:3)
+    at App
+`DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.

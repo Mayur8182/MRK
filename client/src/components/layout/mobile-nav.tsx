@@ -96,9 +96,16 @@ export default function MobileNav() {
                     Users
                   </a>
                 </Link>
-                <a href="#" className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
-                  Settings
-                </a>
+                <Link href="/profile-edit">
+                  <a className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+                    Profile
+                  </a>
+                </Link>
+                <Link href="/settings">
+                  <a className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+                    Settings
+                  </a>
+                </Link>
                 <a href="#" className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
                   Help & Support
                 </a>
