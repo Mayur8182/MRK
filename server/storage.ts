@@ -11,6 +11,7 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<User>): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
@@ -75,7 +76,10 @@ export class MemStorage implements IStorage {
       username: "demo",
       password: "password123",
       name: "Demo User",
-      email: "demo@example.com"
+      email: "demo@example.com",
+      profile_image: null,
+      preferences: null,
+      notifications_enabled: true
     });
   }
 
@@ -89,6 +93,12 @@ export class MemStorage implements IStorage {
       (user) => user.username === username,
     );
   }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.email === email,
+    );
+  }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userCurrentId++;
@@ -96,7 +106,11 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
-      created_at: timestamp
+      created_at: timestamp,
+      last_login: null,
+      profile_image: insertUser.profile_image || null,
+      preferences: insertUser.preferences || null,
+      notifications_enabled: insertUser.notifications_enabled ?? true
     };
     this.users.set(id, user);
     return user;
@@ -135,7 +149,9 @@ export class MemStorage implements IStorage {
       ...insertPortfolio,
       id,
       total_value: "0",
-      created_at: timestamp
+      created_at: timestamp,
+      description: insertPortfolio.description || null,
+      is_active: insertPortfolio.is_active ?? true
     };
     this.portfolios.set(id, portfolio);
     return portfolio;
@@ -173,7 +189,10 @@ export class MemStorage implements IStorage {
     const investment: Investment = {
       ...insertInvestment,
       id,
-      purchase_date: timestamp
+      purchase_date: timestamp,
+      description: insertInvestment.description || null,
+      risk_level: insertInvestment.risk_level || null,
+      is_active: insertInvestment.is_active ?? true
     };
     this.investments.set(id, investment);
     
@@ -237,7 +256,8 @@ export class MemStorage implements IStorage {
     const transaction: Transaction = {
       ...insertTransaction,
       id,
-      date: timestamp
+      date: timestamp,
+      notes: insertTransaction.notes || null
     };
     this.transactions.set(id, transaction);
     

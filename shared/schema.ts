@@ -7,16 +7,23 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  name: text("name"),
-  email: text("email"),
-  created_at: timestamp("created_at").defaultNow()
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  profile_image: text("profile_image"),
+  preferences: text("preferences"), // JSON string of user preferences
+  notifications_enabled: boolean("notifications_enabled").notNull().default(true),
+  created_at: timestamp("created_at").defaultNow(),
+  last_login: timestamp("last_login")
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   name: true,
-  email: true
+  email: true,
+  profile_image: true,
+  preferences: true,
+  notifications_enabled: true
 });
 
 // Portfolios table
