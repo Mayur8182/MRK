@@ -395,23 +395,69 @@ export default function AIRecommendations() {
   const [investmentGoals, setInvestmentGoals] = useState<string[]>([]);
   const [customPrompt, setCustomPrompt] = useState("");
   const [filterSector, setFilterSector] = useState("all");
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<number | null>(null);
   
-  // Simulate loading AI recommendations data
-  const { data: recommendationsData, isLoading } = useQuery({
-    queryKey: ['/api/ai-recommendations'],
-    queryFn: async () => {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+  // Get available portfolios
+  const { data: portfolios, isLoading: portfoliosLoading } = useQuery({
+    queryKey: ['/api/portfolios'],
+  });
+  
+  // Check if Perplexity API is enabled
+  const { data: apiStatus } = useQuery({
+    queryKey: ['/api/market/status'],
+  });
+  
+  // Get AI recommendations for the selected portfolio
+  const { data: recommendationsData, isLoading: recommendationsLoading, refetch: refetchRecommendations } = useQuery({
+    queryKey: ['/api/ai/recommendations', selectedPortfolioId],
+    enabled: !!selectedPortfolioId && !!apiStatus?.perplexityEnabled,
+  });
+  
+  // Get risk analysis data
+  const { data: riskAnalysisData, isLoading: riskAnalysisLoading } = useQuery({
+    queryKey: ['/api/ai/risk-analysis', selectedPortfolioId],
+    enabled: !!selectedPortfolioId && !!apiStatus?.perplexityEnabled,
+  });
+  
+  // Get sentiment analysis for the market
+  const { data: marketSentimentData, isLoading: sentimentLoading } = useQuery({
+    queryKey: ['/api/ai/sentiment', 'market'],
+    enabled: !!apiStatus?.perplexityEnabled,
+  });
+  
+  // Set the first portfolio as selected by default when portfolios are loaded
+  React.useEffect(() => {
+    if (portfolios && portfolios.length > 0 && !selectedPortfolioId) {
+      setSelectedPortfolioId(portfolios[0].id);
+    }
+  }, [portfolios, selectedPortfolioId]);
+  
+  // Prepare the combined data from API responses and fallback to sample data when needed
+  const isLoading = portfoliosLoading || recommendationsLoading || riskAnalysisLoading || sentimentLoading;
+  
+  // Combine data from different API calls
+  const combinedData = React.useMemo(() => {
+    // If API is not enabled or data is not loaded yet, use sample data
+    if (!apiStatus?.perplexityEnabled) {
       return {
         recommendations: aiRecommendations,
         globalMarketData,
         riskFactors,
         behavioralInsights,
-        lastUpdated: "2023-12-15T08:30:00Z",
-        insightsSummary: "The AI model has detected a moderate risk environment with opportunities in technology, healthcare, and select consumer sectors. Based on your portfolio composition, risk tolerance, and market conditions, the recommendations focus on high-quality growth stocks with reasonable valuations and strong competitive positions. Consider taking profits in some high-momentum positions while adding to defensive holdings to balance portfolio risk.",
+        lastUpdated: new Date().toISOString(),
+        insightsSummary: "Perplexity AI API is not enabled. Please configure the API key in settings.",
       };
     }
-  });
+    
+    return {
+      recommendations: recommendationsData?.recommendations || aiRecommendations,
+      globalMarketData: marketSentimentData?.globalData || globalMarketData,
+      riskFactors: riskAnalysisData?.riskFactors || riskFactors,
+      behavioralInsights: recommendationsData?.behavioralInsights || behavioralInsights,
+      lastUpdated: recommendationsData?.timestamp || new Date().toISOString(),
+      insightsSummary: recommendationsData?.summary || "Loading AI insights...",
+    };
+  }, [apiStatus, recommendationsData, marketSentimentData, riskAnalysisData]);
 
   // Filter recommendations based on sector filter
   const filteredRecommendations = recommendationsData?.recommendations.filter(rec => {

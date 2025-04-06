@@ -20,14 +20,12 @@ interface MobileNavItemProps {
 
 function MobileNavItem({ icon, label, path, isActive }: MobileNavItemProps) {
   return (
-    <Link href={path}>
-      <a className={cn(
-        "flex flex-col items-center justify-center text-xs",
-        isActive ? "text-primary" : "text-muted-foreground"
-      )}>
-        {icon}
-        <span className="mt-1">{label}</span>
-      </a>
+    <Link href={path} className={cn(
+      "flex flex-col items-center justify-center text-xs",
+      isActive ? "text-primary" : "text-muted-foreground"
+    )}>
+      {icon}
+      <span className="mt-1">{label}</span>
     </Link>
   );
 }
@@ -91,27 +89,21 @@ export default function MobileNav() {
             <div className="py-4">
               <h2 className="text-lg font-semibold mb-4">Menu</h2>
               <nav className="space-y-2">
-                <Link href="/users">
-                  <a className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
-                    Users
-                  </a>
+                <Link href="/users" className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+                  Users
                 </Link>
-                <Link href="/profile-edit">
-                  <a className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
-                    Profile
-                  </a>
+                <Link href="/profile-edit" className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+                  Profile
                 </Link>
-                <Link href="/settings">
-                  <a className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
-                    Settings
-                  </a>
+                <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+                  Settings
                 </Link>
-                <a href="#" className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+                <button className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
                   Help & Support
-                </a>
-                <a href="#" className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+                </button>
+                <button className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
                   Log Out
-                </a>
+                </button>
               </nav>
             </div>
           </SheetContent>

@@ -14,6 +14,11 @@ import { setupAuth } from "./auth";
 import * as marketAPI from "./market-api";
 import * as email from "./email";
 import { generatePDFReport, generateCSVReport } from "./reports";
+import {
+  generateInvestmentRecommendations,
+  analyzeMarketSentiment,
+  generateRiskAnalysis
+} from "./perplexity-api";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -726,12 +731,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fmpEnabled: !!process.env.FMP_API_KEY,
         alphaVantageEnabled: !!process.env.ALPHA_VANTAGE_API_KEY,
         newsApiEnabled: !!process.env.NEWS_API_KEY,
-        emailEnabled: !!process.env.EMAIL_USER && !!process.env.EMAIL_PASS
+        emailEnabled: !!process.env.EMAIL_USER && !!process.env.EMAIL_PASS,
+        perplexityEnabled: !!process.env.PERPLEXITY_API_KEY
       };
       
       res.json(status);
     } catch (error: any) {
       res.status(500).json({ error: error.message || "Failed to check API status" });
+    }
+  });
+
+  // AI Recommendation and Analysis Routes
+  
+  // Helper function to calculate asset allocation for a list of investments
+  function calculateAssetAllocation(investments: any[]): Array<{category: string, percentage: number}> {
+    // Group investments by type
+    const groups: Record<string, number> = investments.reduce((acc: Record<string, number>, inv: any) => {
+      const type = inv.type || 'Other';
+      if (!acc[type]) {
+        acc[type] = 0;
+      }
+      acc[type] += Number(inv.current_value || 0);
+      return acc;
+    }, {});
+    
+    // Calculate total value
+    const totalValue: number = Object.values(groups).reduce((sum: number, val: number) => sum + val, 0);
+    
+    // Convert to percentage
+    return Object.entries(groups).map(([type, value]: [string, number]) => ({
+      category: type,
+      percentage: totalValue > 0 ? (value / totalValue) * 100 : 0
+    }));
+  }
+  
+  // Get AI investment recommendations for a portfolio
+  app.get("/api/ai/recommendations/:portfolioId", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const portfolioId = parseInt(req.params.portfolioId);
+      
+      // Get portfolio data
+      const portfolio = await storage.getPortfolio(portfolioId);
+      if (!portfolio) {
+        return res.status(404).json({ error: "Portfolio not found" });
+      }
+      
+      // Get portfolio investments
+      const investments = await storage.getInvestments(portfolioId);
+      
+      // Prepare the data for the AI recommendation
+      const portfolioData = {
+        portfolio,
+        investments,
+        marketTrends: "bullish", // This could be dynamic based on market analysis
+        userRiskTolerance: "moderate" // Default to moderate risk tolerance
+      };
+      
+      // Generate recommendations
+      const recommendations = await generateInvestmentRecommendations(portfolioData);
+      res.json(recommendations);
+    } catch (error: any) {
+      console.error("AI recommendation error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Analyze market sentiment for a specific symbol or the market in general
+  app.get("/api/ai/sentiment/:symbol", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const symbol = req.params.symbol;
+      
+      // Get recent news for the symbol or market
+      const news = await marketAPI.getFinancialNews(symbol !== 'market' ? symbol : undefined);
+      const newsSummaries = news.map((item: any) => item.title + ": " + item.summary);
+      
+      // Generate sentiment analysis
+      const sentiment = await analyzeMarketSentiment(symbol, newsSummaries);
+      res.json(sentiment);
+    } catch (error: any) {
+      console.error("AI sentiment analysis error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Generate risk analysis for a portfolio
+  app.get("/api/ai/risk-analysis/:portfolioId", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const portfolioId = parseInt(req.params.portfolioId);
+      
+      // Get portfolio data
+      const portfolio = await storage.getPortfolio(portfolioId);
+      if (!portfolio) {
+        return res.status(404).json({ error: "Portfolio not found" });
+      }
+      
+      // Get portfolio investments
+      const investments = await storage.getInvestments(portfolioId);
+      
+      // Get market indices data for context
+      const marketData = await marketAPI.getMarketIndices();
+      
+      // Prepare the data for risk analysis
+      const portfolioData = {
+        portfolio,
+        investments,
+        totalValue: investments.reduce((sum: number, inv: any) => sum + Number(inv.current_value || 0), 0),
+        assetAllocation: calculateAssetAllocation(investments)
+      };
+      
+      // Generate risk analysis
+      const riskAnalysis = await generateRiskAnalysis(portfolioData, marketData);
+      res.json(riskAnalysis);
+    } catch (error: any) {
+      console.error("AI risk analysis error:", error);
+      res.status(500).json({ error: error.message });
     }
   });
 

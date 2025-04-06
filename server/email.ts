@@ -1,39 +1,53 @@
 import nodemailer from 'nodemailer';
 
 // Check for necessary email credentials
-let transporter: nodemailer.Transporter;
+let transporter: nodemailer.Transporter | null = null;
+let emailEnabled = false;
 
-// Only create a transporter if we have the necessary credentials
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-  try {
-    // For Gmail, use OAuth2 tokens or App Password instead of regular password
-    // For most reliable results with Gmail, use App Passwords: https://myaccount.google.com/apppasswords
-    transporter = nodemailer.createTransport({
-      service: 'gmail',  // Using built-in nodemailer Gmail configuration
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      },
-      tls: {
-        rejectUnauthorized: false // Needed in some environments
-      }
-    });
+// Initialize email transporter function - can be called multiple times to retry connections
+function initEmailTransporter() {
+  // Only create a transporter if we have the necessary credentials
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    try {
+      // For Gmail, use OAuth2 tokens or App Password instead of regular password
+      // For most reliable results with Gmail, use App Passwords: https://myaccount.google.com/apppasswords
+      transporter = nodemailer.createTransport({
+        service: 'gmail',  // Using built-in nodemailer Gmail configuration
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        },
+        tls: {
+          rejectUnauthorized: false // Needed in some environments
+        }
+      });
 
-    // Verify transporter configuration
-    transporter.verify((error) => {
-      if (error) {
-        console.error("Email configuration error:", error);
-        console.warn("Please ensure your Gmail account has 'Less secure app access' enabled or you're using an App Password");
-      } else {
-        console.log("SMTP server is ready to send emails");
-      }
-    });
-  } catch (error) {
-    console.error("Failed to create email transporter:", error);
+      // Verify transporter configuration
+      transporter.verify((error) => {
+        if (error) {
+          console.error("Email configuration error:", error);
+          console.warn("Please ensure your Gmail account has 'Less secure app access' enabled or you're using an App Password");
+          emailEnabled = false;
+          transporter = null;
+        } else {
+          console.log("SMTP server is ready to send emails");
+          emailEnabled = true;
+        }
+      });
+    } catch (error) {
+      console.error("Failed to create email transporter:", error);
+      emailEnabled = false;
+      transporter = null;
+    }
+  } else {
+    console.warn("Email credentials not provided. Email functionality will be disabled.");
+    emailEnabled = false;
+    transporter = null;
   }
-} else {
-  console.warn("Email credentials not provided. Email functionality will be disabled.");
 }
+
+// Initialize the email transporter on startup
+initEmailTransporter();
 
 /**
  * Sends an email notification
@@ -43,10 +57,16 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
  * @returns Promise resolving to the sent message info or null if email is disabled
  */
 export async function sendEmail(to: string, subject: string, html: string) {
-  // Return early if email functionality is disabled
-  if (!transporter) {
-    console.warn("Email sending skipped: Email functionality is disabled due to missing credentials");
-    return null;
+  // Attempt to initialize email if it's not already set up
+  if (!emailEnabled || !transporter) {
+    console.log("Email not configured, attempting to initialize...");
+    initEmailTransporter();
+    
+    // If still not enabled after initialization attempt
+    if (!emailEnabled || !transporter) {
+      console.warn("Email sending skipped: Email functionality is disabled due to missing or invalid credentials");
+      return null;
+    }
   }
   
   try {
@@ -61,6 +81,19 @@ export async function sendEmail(to: string, subject: string, html: string) {
     return info;
   } catch (error: any) {
     console.error("Failed to send email:", error);
+    
+    // Check if this is an authentication error, and reset the transporter if needed
+    if (error.message && (
+        error.message.includes('authentication') || 
+        error.message.includes('auth') || 
+        error.message.includes('535') ||
+        error.message.includes('credentials')
+      )) {
+      console.warn("Authentication error detected. Email credentials may be invalid.");
+      emailEnabled = false;
+      transporter = null;
+    }
+    
     // Don't throw, just log the error
     console.warn(`Failed to send email to ${to}: ${error.message}`);
     return null;
