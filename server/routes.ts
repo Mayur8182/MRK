@@ -900,6 +900,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to check email status" });
     }
   });
+  
+  // User settings endpoint
+  app.post("/api/settings", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as User).id;
+      const settings = req.body;
+      
+      // Save settings to user profile
+      const updatedUser = await storage.updateUser(userId, {
+        preferences: JSON.stringify(settings),
+      });
+      
+      res.status(200).json({ success: true, settings });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      res.status(500).json({ error: "Failed to save settings" });
+    }
+  });
 
   return httpServer;
 }

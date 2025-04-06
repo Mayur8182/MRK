@@ -50,17 +50,9 @@ export default function PortfolioEdit() {
   const mutation = useMutation({
     mutationFn: async (data) => {
       if (id) {
-        return apiRequest(`/api/portfolios/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
+        return apiRequest('PUT', `/api/portfolios/${id}`, data);
       } else {
-        return apiRequest('/api/portfolios', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
+        return apiRequest('POST', '/api/portfolios', data);
       }
     },
     onSuccess: () => {

@@ -225,6 +225,18 @@ export default function Reports() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedReport, setSelectedReport] = useState<number | null>(1);
   
+  // Query the user's portfolios
+  const portfoliosQuery = useQuery({
+    queryKey: ['/api/portfolios'],
+    queryFn: async () => {
+      const response = await fetch('/api/portfolios');
+      if (!response.ok) {
+        throw new Error('Failed to fetch portfolios');
+      }
+      return response.json();
+    }
+  });
+  
   // Simulate loading reports data
   const { data: reportsData, isLoading } = useQuery({
     queryKey: ['/api/reports'],
@@ -409,9 +421,30 @@ export default function Reports() {
                           size="sm"
                           onClick={() => {
                             if (!currentReport) return;
-                            const portfolioId = 1; // Change this to dynamic portfolio ID when available
-                            const url = `/api/reports/download/csv/${portfolioId}?timeframe=${timeframe}`;
-                            window.open(url, '_blank');
+                            
+                            // Query the user's portfolios and use the first one
+                            fetch('/api/portfolios')
+                              .then(res => res.json())
+                              .then(portfolios => {
+                                if (portfolios && portfolios.length > 0) {
+                                  const portfolioId = portfolios[0].id;
+                                  const url = `/api/reports/download/csv/${portfolioId}?timeframe=${timeframe}`;
+                                  window.open(url, '_blank');
+                                } else {
+                                  toast({
+                                    title: "No portfolio found",
+                                    description: "Please create a portfolio first.",
+                                    variant: "destructive"
+                                  });
+                                }
+                              })
+                              .catch(error => {
+                                toast({
+                                  title: "Error accessing portfolios",
+                                  description: error.message,
+                                  variant: "destructive"
+                                });
+                              });
                           }}
                         >
                           <Download className="mr-2 h-4 w-4" />
@@ -445,7 +478,7 @@ export default function Reports() {
                             <CardContent className="p-3">
                               <p className="text-xs text-muted-foreground mb-1">Total Return</p>
                               <div className="text-xl font-bold text-green-500">
-                                +{reportsData?.reportData.summary.totalReturn}%
+                                +{reportsData?.reportData.summary.totalReturn ?? 0}%
                               </div>
                             </CardContent>
                           </Card>
@@ -453,7 +486,7 @@ export default function Reports() {
                             <CardContent className="p-3">
                               <p className="text-xs text-muted-foreground mb-1">vs Benchmark</p>
                               <div className="text-xl font-bold text-green-500">
-                                +{(reportsData?.reportData.summary.totalReturn - reportsData?.reportData.summary.benchmarkReturn).toFixed(2)}%
+                                +{((reportsData?.reportData.summary.totalReturn ?? 0) - (reportsData?.reportData.summary.benchmarkReturn ?? 0)).toFixed(2)}%
                               </div>
                             </CardContent>
                           </Card>
@@ -461,7 +494,7 @@ export default function Reports() {
                             <CardContent className="p-3">
                               <p className="text-xs text-muted-foreground mb-1">Starting Value</p>
                               <div className="text-xl font-bold">
-                                ${reportsData?.reportData.summary.startingValue.toLocaleString()}
+                                ${(reportsData?.reportData.summary.startingValue ?? 0).toLocaleString()}
                               </div>
                             </CardContent>
                           </Card>
@@ -469,7 +502,7 @@ export default function Reports() {
                             <CardContent className="p-3">
                               <p className="text-xs text-muted-foreground mb-1">Current Value</p>
                               <div className="text-xl font-bold">
-                                ${reportsData?.reportData.summary.endingValue.toLocaleString()}
+                                ${(reportsData?.reportData.summary.endingValue ?? 0).toLocaleString()}
                               </div>
                             </CardContent>
                           </Card>
@@ -579,9 +612,27 @@ export default function Reports() {
                             variant="outline" 
                             size="sm"
                             onClick={() => {
-                              const portfolioId = 1; // Change this to dynamic portfolio ID when available
-                              const url = `/api/reports/download/pdf/${portfolioId}?timeframe=${timeframe}`;
-                              window.open(url, '_blank');
+                              const { data: portfolios, error } = portfoliosQuery;
+                              if (error) {
+                                toast({
+                                  title: "Error accessing portfolios",
+                                  description: error.message,
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
+                              
+                              if (portfolios && portfolios.length > 0) {
+                                const portfolioId = portfolios[0].id;
+                                const url = `/api/reports/download/pdf/${portfolioId}?timeframe=${timeframe}`;
+                                window.open(url, '_blank');
+                              } else {
+                                toast({
+                                  title: "No portfolio found",
+                                  description: "Please create a portfolio first.",
+                                  variant: "destructive"
+                                });
+                              }
                             }}
                           >
                             <FileDown className="mr-2 h-4 w-4" />
