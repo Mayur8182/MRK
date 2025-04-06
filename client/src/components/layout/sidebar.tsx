@@ -29,15 +29,15 @@ interface SidebarItemProps {
 function SidebarItem({ icon, label, path, isActive }: SidebarItemProps) {
   return (
     <Link href={path}>
-      <a className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+      <div className={cn(
+        "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors cursor-pointer",
         isActive 
           ? "bg-primary/10 text-primary font-medium" 
           : "text-muted-foreground hover:bg-muted hover:text-foreground"
       )}>
         {icon}
         <span>{label}</span>
-      </a>
+      </div>
     </Link>
   );
 }

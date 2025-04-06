@@ -5,24 +5,32 @@ let transporter: nodemailer.Transporter;
 
 // Only create a transporter if we have the necessary credentials
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-  transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
+  try {
+    // For Gmail, use OAuth2 tokens or App Password instead of regular password
+    // For most reliable results with Gmail, use App Passwords: https://myaccount.google.com/apppasswords
+    transporter = nodemailer.createTransport({
+      service: 'gmail',  // Using built-in nodemailer Gmail configuration
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      tls: {
+        rejectUnauthorized: false // Needed in some environments
+      }
+    });
 
-  // Verify transporter configuration
-  transporter.verify((error) => {
-    if (error) {
-      console.error("Email configuration error:", error);
-    } else {
-      console.log("SMTP server is ready to send emails");
-    }
-  });
+    // Verify transporter configuration
+    transporter.verify((error) => {
+      if (error) {
+        console.error("Email configuration error:", error);
+        console.warn("Please ensure your Gmail account has 'Less secure app access' enabled or you're using an App Password");
+      } else {
+        console.log("SMTP server is ready to send emails");
+      }
+    });
+  } catch (error) {
+    console.error("Failed to create email transporter:", error);
+  }
 } else {
   console.warn("Email credentials not provided. Email functionality will be disabled.");
 }

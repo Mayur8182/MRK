@@ -11,6 +11,9 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { setupAuth } from "./auth";
+import * as marketAPI from "./market-api";
+import * as email from "./email";
+import { generatePDFReport, generateCSVReport } from "./reports";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -453,6 +456,282 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error recording performance:", error);
       res.status(500).json({ error: "Failed to record performance data" });
+    }
+  });
+
+  // Market data endpoints
+  app.get("/api/market/quote/:symbol", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      const quote = await marketAPI.getStockQuote(symbol);
+      res.json(quote);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch stock quote" });
+    }
+  });
+
+  app.get("/api/market/historical/:symbol", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      const from = req.query.from as string || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const to = req.query.to as string || new Date().toISOString().split('T')[0];
+      
+      const historicalData = await marketAPI.getHistoricalPrices(symbol, from, to);
+      res.json(historicalData);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch historical prices" });
+    }
+  });
+
+  app.get("/api/market/company/:symbol", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      const companyProfile = await marketAPI.getCompanyProfile(symbol);
+      res.json(companyProfile);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch company profile" });
+    }
+  });
+
+  app.get("/api/market/indices", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const indices = await marketAPI.getMarketIndices();
+      res.json(indices);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch market indices" });
+    }
+  });
+
+  app.get("/api/market/news", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const symbol = req.query.symbol as string;
+      const news = await marketAPI.getFinancialNews(symbol);
+      res.json(news);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch financial news" });
+    }
+  });
+
+  app.get("/api/market/search", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const query = req.query.q as string;
+      if (!query) {
+        return res.status(400).json({ error: "Search query is required" });
+      }
+      
+      const results = await marketAPI.searchStocks(query);
+      res.json(results);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to search stocks" });
+    }
+  });
+
+  app.get("/api/market/technical/:symbol", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      const interval = req.query.interval as 'daily' | 'weekly' | 'monthly' || 'daily';
+      const timePeriod = parseInt(req.query.period as string) || 14;
+      const indicatorType = req.query.indicator as 'SMA' | 'EMA' | 'RSI' | 'MACD' || 'SMA';
+      
+      const technicalData = await marketAPI.getTechnicalIndicator(symbol, interval, timePeriod, indicatorType);
+      res.json(technicalData);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to fetch technical indicators" });
+    }
+  });
+
+  app.get("/api/market/sentiment/:symbol", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const symbol = req.params.symbol.toUpperCase();
+      const sentiment = await marketAPI.getNewsSentiment(symbol);
+      res.json(sentiment);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to analyze news sentiment" });
+    }
+  });
+
+  // Report generation endpoint
+  app.get("/api/reports/generate/:portfolioId", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const portfolioId = parseInt(req.params.portfolioId);
+      
+      // Verify that the portfolio belongs to the user
+      const portfolio = await storage.getPortfolio(portfolioId);
+      if (!portfolio) {
+        return res.status(404).json({ error: "Portfolio not found" });
+      }
+      
+      if (portfolio.user_id !== (req.user as User).id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      // Get all portfolio data
+      const investments = await storage.getInvestments(portfolioId);
+      const transactions = await storage.getTransactions(portfolioId);
+      const performance = await storage.getPerformanceHistory(portfolioId);
+      
+      // Calculate total current value from investments
+      const totalCurrentValue = investments.reduce((total, inv) => total + Number(inv.current_value), 0);
+      
+      // Calculate total cost from investments
+      const totalCost = investments.reduce((total, inv) => total + Number(inv.amount), 0);
+      
+      // Generate report
+      const report = {
+        portfolioId,
+        portfolioName: portfolio.name,
+        generated: new Date(),
+        timeframe: req.query.timeframe || 'all',
+        portfolioData: portfolio,
+        investments,
+        transactions,
+        performance,
+        summary: {
+          totalValue: totalCurrentValue,
+          totalCost: totalCost,
+          totalReturn: totalCurrentValue - totalCost,
+          returnPercentage: totalCost > 0 
+            ? ((totalCurrentValue - totalCost) / totalCost) * 100 
+            : 0,
+          investmentCount: investments.length,
+          transactionCount: transactions.length
+        }
+      };
+      
+      res.json(report);
+    } catch (error: any) {
+      console.error("Error generating report:", error);
+      res.status(500).json({ error: error.message || "Failed to generate report" });
+    }
+  });
+  
+  // Download report as PDF
+  app.get("/api/reports/download/pdf/:portfolioId", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const portfolioId = parseInt(req.params.portfolioId);
+      
+      // Verify that the portfolio belongs to the user
+      const portfolio = await storage.getPortfolio(portfolioId);
+      if (!portfolio) {
+        return res.status(404).json({ error: "Portfolio not found" });
+      }
+      
+      if (portfolio.user_id !== (req.user as User).id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      // Get all portfolio data
+      const investments = await storage.getInvestments(portfolioId);
+      const transactions = await storage.getTransactions(portfolioId);
+      const performance = await storage.getPerformanceHistory(portfolioId);
+      
+      // Calculate total current value from investments
+      const totalCurrentValue = investments.reduce((total, inv) => total + Number(inv.current_value), 0);
+      
+      // Calculate total cost from investments
+      const totalCost = investments.reduce((total, inv) => total + Number(inv.amount), 0);
+      
+      // Generate report data
+      const reportData = {
+        portfolioId,
+        portfolioName: portfolio.name,
+        generated: new Date(),
+        timeframe: String(req.query.timeframe || 'all'),
+        portfolioData: portfolio,
+        investments,
+        transactions,
+        performance,
+        summary: {
+          totalValue: totalCurrentValue,
+          totalCost: totalCost,
+          totalReturn: totalCurrentValue - totalCost,
+          returnPercentage: totalCost > 0 
+            ? ((totalCurrentValue - totalCost) / totalCost) * 100 
+            : 0,
+          investmentCount: investments.length,
+          transactionCount: transactions.length
+        }
+      };
+      
+      // Generate PDF report
+      generatePDFReport(res, reportData);
+      
+    } catch (error: any) {
+      console.error("Error generating PDF report:", error);
+      res.status(500).json({ error: error.message || "Failed to generate PDF report" });
+    }
+  });
+  
+  // Download report as CSV
+  app.get("/api/reports/download/csv/:portfolioId", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const portfolioId = parseInt(req.params.portfolioId);
+      
+      // Verify that the portfolio belongs to the user
+      const portfolio = await storage.getPortfolio(portfolioId);
+      if (!portfolio) {
+        return res.status(404).json({ error: "Portfolio not found" });
+      }
+      
+      if (portfolio.user_id !== (req.user as User).id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      // Get all portfolio data
+      const investments = await storage.getInvestments(portfolioId);
+      const transactions = await storage.getTransactions(portfolioId);
+      const performance = await storage.getPerformanceHistory(portfolioId);
+      
+      // Calculate total current value from investments
+      const totalCurrentValue = investments.reduce((total, inv) => total + Number(inv.current_value), 0);
+      
+      // Calculate total cost from investments
+      const totalCost = investments.reduce((total, inv) => total + Number(inv.amount), 0);
+      
+      // Generate report data
+      const reportData = {
+        portfolioId,
+        portfolioName: portfolio.name,
+        generated: new Date(),
+        timeframe: String(req.query.timeframe || 'all'),
+        portfolioData: portfolio,
+        investments,
+        transactions,
+        performance,
+        summary: {
+          totalValue: totalCurrentValue,
+          totalCost: totalCost,
+          totalReturn: totalCurrentValue - totalCost,
+          returnPercentage: totalCost > 0 
+            ? ((totalCurrentValue - totalCost) / totalCost) * 100 
+            : 0,
+          investmentCount: investments.length,
+          transactionCount: transactions.length
+        }
+      };
+      
+      // Generate CSV report
+      generateCSVReport(res, reportData);
+      
+    } catch (error: any) {
+      console.error("Error generating CSV report:", error);
+      res.status(500).json({ error: error.message || "Failed to generate CSV report" });
+    }
+  });
+  
+  // API key check endpoints
+  app.get("/api/market/status", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const status = {
+        fmpEnabled: !!process.env.FMP_API_KEY,
+        alphaVantageEnabled: !!process.env.ALPHA_VANTAGE_API_KEY,
+        newsApiEnabled: !!process.env.NEWS_API_KEY,
+        emailEnabled: !!process.env.EMAIL_USER && !!process.env.EMAIL_PASS
+      };
+      
+      res.json(status);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to check API status" });
     }
   });
 

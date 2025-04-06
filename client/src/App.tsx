@@ -32,14 +32,20 @@ import GlobalMarkets from "@/pages/global-markets";
 // Main app layout with sidebar and header
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
+    <div className="flex flex-col lg:flex-row h-screen bg-background">
+      <div className="hidden lg:block">
+        <Sidebar />
+      </div>
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {children}
+          <div className="responsive-container">
+            {children}
+          </div>
         </main>
-        <MobileNav />
+        <div className="block lg:hidden">
+          <MobileNav />
+        </div>
       </div>
     </div>
   );
