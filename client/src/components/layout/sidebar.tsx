@@ -4,13 +4,13 @@ import {
   LayoutDashboard,
   LineChart,
   BriefcaseBusiness,
-  History,
+  Clock, // Changed from History
   Users,
   Settings,
   HelpCircle,
   LogOut,
   Shield,
-  BarChart4,
+  BarChart,  // Changed from BarChart4
   Lightbulb,
   Bell,
   FileText,
@@ -78,7 +78,7 @@ export default function Sidebar() {
       path: "/transactions",
     },
     {
-      icon: <BarChart4 size={18} />,
+      icon: <BarChart size={18} />,
       label: "Analytics",
       path: "/analytics",
     },

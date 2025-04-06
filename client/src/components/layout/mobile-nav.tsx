@@ -3,7 +3,7 @@ import {
   LayoutDashboard,
   LineChart,
   BriefcaseBusiness,
-  History,
+  Clock, // Changed from History
   Menu,
   Activity,
 } from "lucide-react";
@@ -54,7 +54,7 @@ export default function MobileNav() {
       path: "/investments",
     },
     {
-      icon: <History size={20} />,
+      icon: <Clock size={20} />, // Changed from History
       label: "History",
       path: "/transactions",
     },
