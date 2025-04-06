@@ -28,6 +28,7 @@ import AIRecommendations from "@/pages/ai-recommendations";
 import TaxHarvesting from "@/pages/tax-harvesting";
 import SentimentAnalysis from "@/pages/sentiment-analysis";
 import GlobalMarkets from "@/pages/global-markets";
+import RealTimeAnalytics from "@/pages/real-time-analytics";
 
 // Main app layout with sidebar and header
 function AppLayout({ children }: { children: React.ReactNode }) {
@@ -149,6 +150,11 @@ function Router() {
       <ProtectedRoute path="/global-markets" component={() => (
         <AppLayout>
           <GlobalMarkets />
+        </AppLayout>
+      )} />
+      <ProtectedRoute path="/real-time-analytics" component={() => (
+        <AppLayout>
+          <RealTimeAnalytics />
         </AppLayout>
       )} />
       <ProtectedRoute path="/alerts" component={() => (

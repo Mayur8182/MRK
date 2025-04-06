@@ -20,6 +20,8 @@ import {
   generateRiskAnalysis
 } from "./perplexity-api";
 
+import { WebSocket, WebSocketServer } from 'ws';
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
@@ -919,5 +921,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create WebSocket server for real-time market updates and notifications
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Map to track connected clients by userId
+  const clients = new Map<number, WebSocket[]>();
+  
+  wss.on('connection', (ws: WebSocket) => {
+    console.log('WebSocket client connected');
+    
+    // Handle client authentication and connection setup
+    ws.on('message', (message: string) => {
+      try {
+        const data = JSON.parse(message);
+        
+        // Handle authentication message
+        if (data.type === 'auth' && data.userId) {
+          const userId = Number(data.userId);
+          
+          // Add this client to the user's client list
+          if (!clients.has(userId)) {
+            clients.set(userId, []);
+          }
+          
+          clients.get(userId)?.push(ws);
+          
+          // Let the client know authentication was successful
+          ws.send(JSON.stringify({ 
+            type: 'auth_success', 
+            message: 'Connected to real-time market updates' 
+          }));
+          
+          // Send initial data snapshot
+          sendMarketData(ws);
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+    
+    // Handle client disconnection
+    ws.on('close', () => {
+      console.log('WebSocket client disconnected');
+      
+      // Remove this connection from all user client lists
+      clients.forEach((userClients, userId) => {
+        const index = userClients.indexOf(ws);
+        if (index !== -1) {
+          userClients.splice(index, 1);
+          
+          // If this was the last client for this user, remove the user entry
+          if (userClients.length === 0) {
+            clients.delete(userId);
+          }
+        }
+      });
+    });
+  });
+  
+  // Function to send market data to a specific client
+  function sendMarketData(ws: WebSocket) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'market_data',
+        timestamp: new Date().toISOString(),
+        data: {
+          indices: {
+            'S&P 500': { value: 5238.82, change: 0.68 },
+            'Dow Jones': { value: 39196.85, change: 0.35 },
+            'NASDAQ': { value: 16422.15, change: 1.42 },
+            'Russell 2000': { value: 2132.47, change: -0.21 }
+          },
+          topMovers: [
+            { symbol: 'NVDA', name: 'NVIDIA', price: 892.45, change: 4.2 },
+            { symbol: 'AAPL', name: 'Apple', price: 168.59, change: -1.3 },
+            { symbol: 'TSLA', name: 'Tesla', price: 175.10, change: 2.8 },
+            { symbol: 'MSFT', name: 'Microsoft', price: 426.37, change: 1.1 },
+            { symbol: 'AMZN', name: 'Amazon', price: 182.52, change: 0.5 }
+          ],
+          sectorPerformance: [
+            { name: 'Technology', change: 1.8 },
+            { name: 'Healthcare', change: -0.3 },
+            { name: 'Consumer Cyclical', change: 0.2 },
+            { name: 'Financial Services', change: 0.7 },
+            { name: 'Communication Services', change: 1.2 }
+          ]
+        }
+      }));
+    }
+  }
+  
+  // Set up interval to send market updates to all clients
+  setInterval(() => {
+    // Iterate through all connected clients
+    clients.forEach((userClients, userId) => {
+      userClients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          sendMarketData(client);
+        }
+      });
+    });
+  }, 30000); // Update every 30 seconds
+  
   return httpServer;
 }

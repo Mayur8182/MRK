@@ -16,6 +16,7 @@ import {
   FileText,
   User,
   CreditCard,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -80,6 +81,11 @@ export default function Sidebar() {
       icon: <BarChart4 size={18} />,
       label: "Analytics",
       path: "/analytics",
+    },
+    {
+      icon: <Activity size={18} />,
+      label: "Real-Time Analytics",
+      path: "/real-time-analytics",
     },
     {
       icon: <Lightbulb size={18} />,

@@ -5,6 +5,7 @@ import {
   BriefcaseBusiness,
   History,
   Menu,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,10 @@ export default function MobileNav() {
               <nav className="space-y-2">
                 <Link href="/users" className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
                   Users
+                </Link>
+                <Link href="/real-time-analytics" className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+                  <Activity size={18} className="mr-2" />
+                  Real-Time Analytics
                 </Link>
                 <Link href="/profile-edit" className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
                   Profile

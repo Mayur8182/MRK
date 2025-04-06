@@ -50,7 +50,9 @@ function initEmailTransporter() {
         },
         tls: {
           rejectUnauthorized: false // Needed in some environments
-        }
+        },
+        debug: true, // Enable debug output for troubleshooting
+        logger: true // Log information on the console about the transport
       });
 
       // Verify transporter configuration
