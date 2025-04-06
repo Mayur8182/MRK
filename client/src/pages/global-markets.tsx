@@ -282,13 +282,19 @@ export default function GlobalMarkets() {
   const [selectedRegion, setSelectedRegion] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Simulate loading global market data
+  // Load global market data from API
   const { data: marketData, isLoading } = useQuery({
-    queryKey: ['/api/global-markets'],
+    queryKey: ['/api/market/indices'],
     queryFn: async () => {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return globalMarketData;
+      // Fallback to mock data if API fails
+      try {
+        const response = await fetch('/api/market/indices');
+        if (!response.ok) throw new Error('Failed to fetch market data');
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching market data:', error);
+        return globalMarketData; // Fallback to sample data
+      }
     }
   });
 

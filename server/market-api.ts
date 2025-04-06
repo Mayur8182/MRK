@@ -130,15 +130,50 @@ export async function getMarketIndices() {
       throw new Error('Financial Modeling Prep API key not provided');
     }
     
-    const indices = ['^GSPC', '^DJI', '^IXIC', '^RUT', '^FTSE', '^N225'];
-    const response = await axios.get(`${FMP_BASE_URL}/quote/${indices.join(',')}`, {
+    // Major market indices from different regions
+    const majorIndices = ['^GSPC', '^DJI', '^IXIC', '^FTSE', '^N225', '000001.SS'];
+    const globalIndices = ['^GDAXI', '^FCHI', '^IBEX', '^FTMIB', '^AXJO', '^KS11', '^BSESN', '^HSI', '^BVSP', '^MXX'];
+    
+    // Get major indices
+    const majorResponse = await axios.get(`${FMP_BASE_URL}/quote/${majorIndices.join(',')}`, {
       params: {
         apikey: FMP_API_KEY
       }
     });
     
-    if (response.data && response.data.length > 0) {
-      return response.data;
+    // Get global indices
+    const globalResponse = await axios.get(`${FMP_BASE_URL}/quote/${globalIndices.join(',')}`, {
+      params: {
+        apikey: FMP_API_KEY
+      }
+    });
+    
+    if (majorResponse.data?.length > 0 && globalResponse.data?.length > 0) {
+      // Map the data to our expected format
+      const majorMarkets = mapIndices(majorResponse.data);
+      const globalIndices = mapIndices(globalResponse.data);
+      
+      // Get regional performance data (sample data for now - would be calculated from actual data)
+      const regionPerformance = getSampleRegionPerformance();
+      
+      // Get sector performance data (sample data for now)
+      const sectorPerformance = getSampleSectorPerformance();
+      
+      // Sample currencies and market hours data
+      const currencies = getSampleCurrencies();
+      const globalEvents = getSampleGlobalEvents();
+      const marketHours = getSampleMarketHours();
+      
+      return {
+        majorMarkets,
+        globalIndices,
+        regionPerformance,
+        sectorPerformance,
+        currencies,
+        globalEvents,
+        marketHours,
+        lastUpdated: new Date().toISOString()
+      };
     }
     
     throw new Error('No market indices data found');
@@ -146,6 +181,168 @@ export async function getMarketIndices() {
     console.error('Error fetching market indices:', error.message);
     throw error;
   }
+}
+
+// Helper function to map API response to our expected format
+function mapIndices(indices: any[]) {
+  const regionMap: Record<string, string> = {
+    '^GSPC': 'North America',
+    '^DJI': 'North America',
+    '^IXIC': 'North America',
+    '^FTSE': 'Europe',
+    '^GDAXI': 'Europe',
+    '^FCHI': 'Europe',
+    '^IBEX': 'Europe',
+    '^FTMIB': 'Europe',
+    '^N225': 'Asia',
+    '000001.SS': 'Asia',
+    '^KS11': 'Asia',
+    '^BSESN': 'Asia',
+    '^HSI': 'Asia',
+    '^AXJO': 'Asia-Pacific',
+    '^BVSP': 'South America',
+    '^MXX': 'North America'
+  };
+  
+  const countryMap: Record<string, string> = {
+    '^GSPC': 'United States',
+    '^DJI': 'United States',
+    '^IXIC': 'United States',
+    '^FTSE': 'United Kingdom',
+    '^GDAXI': 'Germany',
+    '^FCHI': 'France',
+    '^IBEX': 'Spain',
+    '^FTMIB': 'Italy',
+    '^N225': 'Japan',
+    '000001.SS': 'China',
+    '^KS11': 'South Korea',
+    '^BSESN': 'India',
+    '^HSI': 'Hong Kong',
+    '^AXJO': 'Australia',
+    '^BVSP': 'Brazil',
+    '^MXX': 'Mexico'
+  };
+  
+  const nameMap: Record<string, string> = {
+    '^GSPC': 'S&P 500',
+    '^DJI': 'Dow Jones Industrial',
+    '^IXIC': 'NASDAQ Composite',
+    '^FTSE': 'FTSE 100',
+    '^GDAXI': 'DAX',
+    '^FCHI': 'CAC 40',
+    '^IBEX': 'IBEX 35',
+    '^FTMIB': 'FTSE MIB',
+    '^N225': 'Nikkei 225',
+    '000001.SS': 'Shanghai Composite',
+    '^KS11': 'KOSPI',
+    '^BSESN': 'BSE SENSEX',
+    '^HSI': 'Hang Seng',
+    '^AXJO': 'ASX 200',
+    '^BVSP': 'Bovespa',
+    '^MXX': 'IPC Mexico'
+  };
+  
+  const currencyMap: Record<string, string> = {
+    '^GSPC': 'USD',
+    '^DJI': 'USD',
+    '^IXIC': 'USD',
+    '^FTSE': 'GBP',
+    '^GDAXI': 'EUR',
+    '^FCHI': 'EUR',
+    '^IBEX': 'EUR',
+    '^FTMIB': 'EUR',
+    '^N225': 'JPY',
+    '000001.SS': 'CNY',
+    '^KS11': 'KRW',
+    '^BSESN': 'INR',
+    '^HSI': 'HKD',
+    '^AXJO': 'AUD',
+    '^BVSP': 'BRL',
+    '^MXX': 'MXN'
+  };
+  
+  return indices.map((index: any) => ({
+    id: index.symbol,
+    name: nameMap[index.symbol] || index.name,
+    region: regionMap[index.symbol] || 'Global',
+    country: countryMap[index.symbol] || 'Global',
+    value: index.price,
+    change: index.change,
+    changePercent: index.changesPercentage,
+    currency: currencyMap[index.symbol] || 'USD',
+    lastUpdated: new Date().toISOString()
+  }));
+}
+
+// Sample data for regional performance
+function getSampleRegionPerformance() {
+  return [
+    { region: "North America", color: "#10B981", ytd: 15.2, month1: 1.7, month3: 5.1, month6: 11.3, year1: 19.8, year5: 71.5 },
+    { region: "Europe", color: "#6366F1", ytd: 8.7, month1: 0.5, month3: 2.9, month6: 4.8, year1: 9.4, year5: 38.9 },
+    { region: "Asia", color: "#F59E0B", ytd: 5.3, month1: -0.8, month3: 1.2, month6: 3.5, year1: 7.2, year5: 29.7 },
+    { region: "Asia-Pacific", color: "#EC4899", ytd: 6.8, month1: 0.2, month3: 1.9, month6: 3.8, year1: 8.6, year5: 31.5 },
+    { region: "South America", color: "#8B5CF6", ytd: 10.4, month1: 1.1, month3: 4.2, month6: 6.9, year1: 12.3, year5: 41.2 }
+  ];
+}
+
+// Sample data for sector performance
+function getSampleSectorPerformance() {
+  return [
+    { sector: "Technology", value: 25.8, ytdChange: 21.4 },
+    { sector: "Healthcare", value: 15.3, ytdChange: 12.8 },
+    { sector: "Financials", value: 18.7, ytdChange: 15.6 },
+    { sector: "Consumer Discretionary", value: 14.2, ytdChange: 10.3 },
+    { sector: "Communication Services", value: 19.5, ytdChange: 16.7 },
+    { sector: "Industrials", value: 12.6, ytdChange: 9.8 },
+    { sector: "Materials", value: 8.9, ytdChange: 7.1 },
+    { sector: "Energy", value: 5.2, ytdChange: -3.4 },
+    { sector: "Utilities", value: 6.8, ytdChange: 4.2 },
+    { sector: "Real Estate", value: 9.5, ytdChange: 6.8 },
+    { sector: "Consumer Staples", value: 11.2, ytdChange: 8.5 }
+  ];
+}
+
+// Sample currencies data
+function getSampleCurrencies() {
+  return [
+    { code: "EUR/USD", name: "Euro / US Dollar", rate: 1.0915, change: 0.0032, changePercent: 0.29 },
+    { code: "USD/JPY", name: "US Dollar / Japanese Yen", rate: 150.25, change: -0.42, changePercent: -0.28 },
+    { code: "GBP/USD", name: "British Pound / US Dollar", rate: 1.2685, change: 0.0058, changePercent: 0.46 },
+    { code: "USD/CHF", name: "US Dollar / Swiss Franc", rate: 0.8973, change: -0.0024, changePercent: -0.27 },
+    { code: "AUD/USD", name: "Australian Dollar / US Dollar", rate: 0.6615, change: 0.0041, changePercent: 0.62 },
+    { code: "USD/CAD", name: "US Dollar / Canadian Dollar", rate: 1.3658, change: -0.0057, changePercent: -0.42 },
+    { code: "USD/CNY", name: "US Dollar / Chinese Yuan", rate: 7.1842, change: 0.0125, changePercent: 0.17 },
+    { code: "USD/INR", name: "US Dollar / Indian Rupee", rate: 83.1425, change: -0.0375, changePercent: -0.05 }
+  ];
+}
+
+// Sample global events data
+function getSampleGlobalEvents() {
+  return [
+    { id: 1, date: "2023-12-15", title: "Fed Interest Rate Decision", description: "The Federal Reserve kept interest rates unchanged at 5.25-5.50%", impact: "high", regions: ["North America", "Global"], type: "Economic" },
+    { id: 2, date: "2023-12-14", title: "ECB Monetary Policy Meeting", description: "The European Central Bank maintained its key interest rate at 4.0%", impact: "medium", regions: ["Europe"], type: "Economic" },
+    { id: 3, date: "2023-12-13", title: "US CPI Data Release", description: "US inflation cooled to 3.1% year-on-year in November", impact: "high", regions: ["North America", "Global"], type: "Economic" },
+    { id: 4, date: "2023-12-12", title: "OPEC Monthly Report", description: "OPEC maintained its forecast for global oil demand growth in 2024", impact: "medium", regions: ["Global"], type: "Commodity" },
+    { id: 5, date: "2023-12-11", title: "UK GDP Data", description: "UK economy expanded by 0.2% in October, beating expectations", impact: "medium", regions: ["Europe"], type: "Economic" },
+    { id: 6, date: "2023-12-08", title: "Japan GDP Revision", description: "Japan's Q3 GDP was revised down to -0.7% annualized rate", impact: "low", regions: ["Asia"], type: "Economic" }
+  ];
+}
+
+// Sample market hours data
+function getSampleMarketHours() {
+  return [
+    { market: "New York Stock Exchange", region: "North America", status: "open", openTime: "09:30", closeTime: "16:00", localTime: "10:45", timeZone: "EST" },
+    { market: "NASDAQ", region: "North America", status: "open", openTime: "09:30", closeTime: "16:00", localTime: "10:45", timeZone: "EST" },
+    { market: "London Stock Exchange", region: "Europe", status: "open", openTime: "08:00", closeTime: "16:30", localTime: "15:45", timeZone: "GMT" },
+    { market: "Tokyo Stock Exchange", region: "Asia", status: "closed", openTime: "09:00", closeTime: "15:00", localTime: "23:45", timeZone: "JST" },
+    { market: "Shanghai Stock Exchange", region: "Asia", status: "closed", openTime: "09:30", closeTime: "15:00", localTime: "23:45", timeZone: "CST" },
+    { market: "Hong Kong Stock Exchange", region: "Asia", status: "closed", openTime: "09:30", closeTime: "16:00", localTime: "23:45", timeZone: "HKT" },
+    { market: "Frankfurt Stock Exchange", region: "Europe", status: "open", openTime: "09:00", closeTime: "17:30", localTime: "16:45", timeZone: "CET" },
+    { market: "Bombay Stock Exchange", region: "Asia", status: "closed", openTime: "09:15", closeTime: "15:30", localTime: "21:15", timeZone: "IST" },
+    { market: "Australian Securities Exchange", region: "Asia-Pacific", status: "closed", openTime: "10:00", closeTime: "16:00", localTime: "02:45", timeZone: "AEST" },
+    { market: "B3 (Brazil)", region: "South America", status: "closed", openTime: "10:00", closeTime: "17:00", localTime: "12:45", timeZone: "BRT" },
+    { market: "Mexican Stock Exchange", region: "North America", status: "open", openTime: "08:30", closeTime: "15:00", localTime: "09:45", timeZone: "CST" }
+  ];
 }
 
 /**

@@ -402,9 +402,18 @@ export default function Reports() {
                           <Share2 className="mr-2 h-4 w-4" />
                           Share
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            if (!currentReport) return;
+                            const portfolioId = 1; // Change this to dynamic portfolio ID when available
+                            const url = `/api/reports/download/csv/${portfolioId}?timeframe=${timeframe}`;
+                            window.open(url, '_blank');
+                          }}
+                        >
                           <Download className="mr-2 h-4 w-4" />
-                          Download
+                          Download CSV
                         </Button>
                       </div>
                     </div>
@@ -564,7 +573,15 @@ export default function Reports() {
                             <Printer className="mr-2 h-4 w-4" />
                             Print Report
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              const portfolioId = 1; // Change this to dynamic portfolio ID when available
+                              const url = `/api/reports/download/pdf/${portfolioId}?timeframe=${timeframe}`;
+                              window.open(url, '_blank');
+                            }}
+                          >
                             <FileDown className="mr-2 h-4 w-4" />
                             Download PDF
                           </Button>
