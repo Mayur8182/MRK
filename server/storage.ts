@@ -7,7 +7,14 @@ import {
   type Performance, type InsertPerformance
 } from "@shared/schema";
 
+import session from "express-session";
+import createMemoryStore from "memorystore";
+const MemoryStore = createMemoryStore(session);
+
 export interface IStorage {
+  // Session store
+  sessionStore: session.Store;
+  
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -41,6 +48,8 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
+  sessionStore: session.Store;
+  
   private users: Map<number, User>;
   private portfolios: Map<number, Portfolio>;
   private investments: Map<number, Investment>;
@@ -54,6 +63,11 @@ export class MemStorage implements IStorage {
   private performanceCurrentId: number;
 
   constructor() {
+    // Initialize session store
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000, // 24 hours
+    });
+    
     this.users = new Map();
     this.portfolios = new Map();
     this.investments = new Map();
@@ -315,4 +329,8 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Import MongoDB storage
+import { MongoDBStorage } from "./mongoStorage";
+
+// Use MongoDB storage
+export const storage = new MongoDBStorage();

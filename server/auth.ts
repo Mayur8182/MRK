@@ -48,9 +48,6 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-// Setup PostgreSQL session store
-const PgSessionStore = connectPgSimple(session);
-
 export function setupAuth(app: Express) {
   // Initialize session with a secure random secret (better practice for production)
   const sessionSecret = process.env.SESSION_SECRET || require('crypto').randomBytes(32).toString('hex');
@@ -63,11 +60,7 @@ export function setupAuth(app: Express) {
       secure: process.env.NODE_ENV === "production",
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     },
-    store: new PgSessionStore({
-      pool: pool,
-      tableName: "session",
-      createTableIfMissing: true
-    })
+    store: storage.sessionStore
   };
 
   app.set("trust proxy", 1);
