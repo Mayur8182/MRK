@@ -405,6 +405,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const transactionData = insertTransactionSchema.parse(req.body);
       const newTransaction = await storage.createTransaction(transactionData);
+      
+      // Send email notification
+      try {
+        const user = req.user as User;
+        if (user.email && portfolio) {
+          // Try to get investment name for more detailed notification
+          let investmentName = undefined;
+          if (investment) {
+            investmentName = investment.name;
+          }
+          
+          // Send transaction email notification
+          email.sendTransactionEmail(
+            user.email, 
+            {
+              id: newTransaction.id,
+              transactionType: newTransaction.transaction_type,
+              amount: Number(newTransaction.amount),
+              date: newTransaction.date || new Date(),
+              notes: newTransaction.notes || undefined
+            },
+            portfolio.name,
+            investmentName
+          ).catch(emailErr => {
+            // Just log the error but don't interrupt the API response
+            console.warn("Failed to send transaction email, but transaction was created:", emailErr);
+          });
+        }
+      } catch (emailErr) {
+        // Log email error but don't disrupt the transaction response
+        console.warn("Error preparing transaction email:", emailErr);
+      }
+      
       res.status(201).json(newTransaction);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -845,6 +878,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("AI risk analysis error:", error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get email service status
+  app.get("/api/system/email-status", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const status = email.getEmailStatus();
+      
+      // Only admin can see detailed error information
+      const isAdmin = (req.user as User).username === 'admin';
+      
+      res.json({
+        emailEnabled: status.enabled,
+        transporterType: status.transporterType,
+        failedAttempts: status.failedAttempts,
+        lastError: isAdmin ? status.lastError : (status.lastError ? "Email configuration error. Contact administrator." : null)
+      });
+    } catch (error) {
+      console.error("Error checking email status:", error);
+      res.status(500).json({ error: "Failed to check email status" });
     }
   });
 

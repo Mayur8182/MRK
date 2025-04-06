@@ -3,10 +3,31 @@ import nodemailer from 'nodemailer';
 // Check for necessary email credentials
 let transporter: nodemailer.Transporter | null = null;
 let emailEnabled = false;
+// Track failed email attempts for logging purposes
+let emailFailedAttempts = 0;
+let lastEmailError: string | null = null;
+
+// For testing/development, we can use a fake transporter that just logs emails
+const createFakeTransporter = () => {
+  return {
+    sendMail: async (mailOptions: any) => {
+      console.log("🛑 FAKE EMAIL (not actually sent) 🛑");
+      console.log(`📧 To: ${mailOptions.to}`);
+      console.log(`📋 Subject: ${mailOptions.subject}`);
+      console.log("📄 Email would have been sent with the above details");
+      
+      // Return a fake message ID
+      return { messageId: `fake-email-${Date.now()}@test.com` };
+    },
+    verify: (callback: any) => {
+      callback(null, true);
+    }
+  };
+};
 
 // Initialize email transporter function - can be called multiple times to retry connections
 function initEmailTransporter() {
-  // Only create a transporter if we have the necessary credentials
+  // Only create a real transporter if we have the necessary credentials
   if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     try {
       // For Gmail, use OAuth2 tokens or App Password instead of regular password
@@ -27,22 +48,51 @@ function initEmailTransporter() {
         if (error) {
           console.error("Email configuration error:", error);
           console.warn("Please ensure your Gmail account has 'Less secure app access' enabled or you're using an App Password");
+          lastEmailError = error.message || "Unknown error";
           emailEnabled = false;
-          transporter = null;
+          
+          // If we can't use the real transporter, use the fake one in development
+          if (process.env.NODE_ENV !== 'production') {
+            console.log("⚠️ Using fake email transport for development. Emails will be logged but not sent.");
+            transporter = createFakeTransporter() as any;
+            emailEnabled = true;
+          } else {
+            transporter = null;
+          }
         } else {
           console.log("SMTP server is ready to send emails");
           emailEnabled = true;
+          emailFailedAttempts = 0;
+          lastEmailError = null;
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create email transporter:", error);
+      lastEmailError = error.message || "Unknown error during setup";
       emailEnabled = false;
-      transporter = null;
+      
+      // If we can't use the real transporter, use the fake one in development
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("⚠️ Using fake email transport for development. Emails will be logged but not sent.");
+        transporter = createFakeTransporter() as any;
+        emailEnabled = true;
+      } else {
+        transporter = null;
+      }
     }
   } else {
     console.warn("Email credentials not provided. Email functionality will be disabled.");
+    lastEmailError = "Missing email credentials";
     emailEnabled = false;
-    transporter = null;
+    
+    // If we don't have credentials, use the fake transporter in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("⚠️ Using fake email transport for development. Emails will be logged but not sent.");
+      transporter = createFakeTransporter() as any;
+      emailEnabled = true;
+    } else {
+      transporter = null;
+    }
   }
 }
 
@@ -50,13 +100,35 @@ function initEmailTransporter() {
 initEmailTransporter();
 
 /**
+ * Gets the email service status for monitoring purposes
+ * @returns Object containing email service status details
+ */
+export function getEmailStatus() {
+  return {
+    enabled: emailEnabled,
+    failedAttempts: emailFailedAttempts,
+    lastError: lastEmailError,
+    transporterType: transporter ? (process.env.NODE_ENV !== 'production' && !process.env.EMAIL_USER ? 'fake' : 'real') : 'none'
+  };
+}
+
+/**
  * Sends an email notification
  * @param to Recipient email address
  * @param subject Email subject
  * @param html HTML content of the email
+ * @param options Additional options like priority
  * @returns Promise resolving to the sent message info or null if email is disabled
  */
-export async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(
+  to: string, 
+  subject: string, 
+  html: string, 
+  options: { 
+    priority?: 'high' | 'normal' | 'low',
+    retry?: boolean
+  } = { priority: 'normal', retry: true }
+) {
   // Attempt to initialize email if it's not already set up
   if (!emailEnabled || !transporter) {
     console.log("Email not configured, attempting to initialize...");
@@ -65,6 +137,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
     // If still not enabled after initialization attempt
     if (!emailEnabled || !transporter) {
       console.warn("Email sending skipped: Email functionality is disabled due to missing or invalid credentials");
+      emailFailedAttempts++;
       return null;
     }
   }
@@ -74,13 +147,19 @@ export async function sendEmail(to: string, subject: string, html: string) {
       from: `"Portfolio Manager" <${process.env.EMAIL_USER || "portfolio-manager@example.com"}>`,
       to,
       subject,
-      html
+      html,
+      priority: options.priority
     });
     
     console.log(`Email sent: ${info.messageId}`);
+    // Reset failure tracking on success
+    emailFailedAttempts = 0;
+    lastEmailError = null;
     return info;
   } catch (error: any) {
     console.error("Failed to send email:", error);
+    emailFailedAttempts++;
+    lastEmailError = error.message;
     
     // Check if this is an authentication error, and reset the transporter if needed
     if (error.message && (
@@ -91,7 +170,21 @@ export async function sendEmail(to: string, subject: string, html: string) {
       )) {
       console.warn("Authentication error detected. Email credentials may be invalid.");
       emailEnabled = false;
-      transporter = null;
+      
+      // Only switch to fake transport in development environment
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("⚠️ Switching to fake email transport due to auth error. Emails will be logged but not sent.");
+        transporter = createFakeTransporter() as any;
+        emailEnabled = true;
+        
+        // Try resending with fake transport
+        if (options.retry) {
+          console.log("Retrying with fake transport...");
+          return sendEmail(to, subject, html, { ...options, retry: false });
+        }
+      } else {
+        transporter = null;
+      }
     }
     
     // Don't throw, just log the error
@@ -271,6 +364,87 @@ export async function sendPerformanceReportEmail(to: string, portfolioName: stri
   `;
   
   return sendEmail(to, subject, html);
+}
+
+/**
+ * Sends a transaction notification email
+ * @param to Recipient email address
+ * @param transactionData Transaction data
+ * @param portfolioName Name of the portfolio
+ * @param investmentName Name of the investment
+ */
+export async function sendTransactionEmail(
+  to: string, 
+  transactionData: { 
+    id: number, 
+    transactionType: string, 
+    amount: number, 
+    date: Date | string, 
+    notes?: string 
+  },
+  portfolioName: string,
+  investmentName?: string
+) {
+  // Format the amount based on transaction type (buy/sell/dividend etc)
+  const formattedAmount = new Intl.NumberFormat('en-US', { 
+    style: 'currency', 
+    currency: 'USD' 
+  }).format(Math.abs(transactionData.amount));
+  
+  // Define colors
+  const actionColor = transactionData.transactionType === 'buy' ? '#10b981' : 
+                      transactionData.transactionType === 'sell' ? '#ef4444' : 
+                      transactionData.transactionType === 'dividend' ? '#f59e0b' : '#3b82f6';
+  
+  // Format transaction type for display
+  const formattedType = transactionData.transactionType.charAt(0).toUpperCase() + 
+                        transactionData.transactionType.slice(1);
+  
+  // Format date
+  const formatDate = (date: Date | string) => {
+    const d = date instanceof Date ? date : new Date(date);
+    return d.toLocaleString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
+  const subject = `${formattedType} Transaction - ${portfolioName}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h1 style="color: ${actionColor};">${formattedType} Transaction</h1>
+        <h2>${portfolioName}</h2>
+      </div>
+      
+      <div style="background-color: #f9fafb; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0;">Transaction Details</h3>
+        <p>Transaction ID: <strong>#${transactionData.id}</strong></p>
+        <p>Date: <strong>${formatDate(transactionData.date)}</strong></p>
+        <p>Type: <strong style="color: ${actionColor};">${formattedType}</strong></p>
+        <p>Amount: <strong style="color: ${actionColor};">${formattedAmount}</strong></p>
+        ${investmentName ? `<p>Investment: <strong>${investmentName}</strong></p>` : ''}
+        ${transactionData.notes ? `<p>Notes: <em>${transactionData.notes}</em></p>` : ''}
+      </div>
+      
+      <div style="margin-top: 30px; text-align: center;">
+        <a href="#" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          View Transaction Details
+        </a>
+      </div>
+      
+      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666;">
+        <p>This is an automated notification. If you did not initiate this transaction, please contact our support team immediately.</p>
+        <p style="text-align: center;">Best regards,<br>The Portfolio Manager Team</p>
+      </div>
+    </div>
+  `;
+  
+  // Send with high priority for transaction notifications
+  return sendEmail(to, subject, html, { priority: 'high' });
 }
 
 /**

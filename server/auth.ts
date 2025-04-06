@@ -145,11 +145,17 @@ export function setupAuth(app: Express) {
       req.login(newUser, async (err) => {
         if (err) return next(err);
         
-        // Send welcome email
+        // Send welcome email with high priority
         try {
-          await sendWelcomeEmail(newUser.email, newUser.username);
+          // Use catch internally to prevent waiting if email fails
+          sendWelcomeEmail(newUser.email, newUser.username || newUser.name || 'Investor')
+            .catch(emailError => {
+              console.error("Failed to send welcome email:", emailError);
+            });
+          // We're using fire-and-forget approach here to not block registration
         } catch (emailError) {
-          console.error("Failed to send welcome email:", emailError);
+          console.error("Error preparing welcome email:", emailError);
+          // Continue registration process even if email fails
         }
         
         res.status(201).json(safeUser);
