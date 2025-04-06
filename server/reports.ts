@@ -19,6 +19,20 @@ interface ReportData {
     investmentCount: number;
     transactionCount: number;
   };
+  riskAnalysis?: {
+    portfolioRisk: number; // 1-10 scale
+    volatility: number;
+    diversificationScore: number; // 1-10 scale
+    assetAllocation: {
+      category: string;
+      percentage: number;
+    }[];
+    riskFactors: {
+      factor: string;
+      impact: string;
+      severity: number; // 1-10 scale
+    }[];
+  };
 }
 
 /**
@@ -195,6 +209,120 @@ export function generatePDFReport(res: Response, reportData: ReportData): void {
     doc.moveDown();
   }
   
+  // Add risk analysis section if available
+  if (reportData.riskAnalysis) {
+    addSection(doc, 'Risk Analysis');
+    
+    // Portfolio Risk Score
+    doc.fillColor('#111827')
+       .fontSize(10)
+       .font('Helvetica-Bold')
+       .text('Portfolio Risk Score:', 50, doc.y, { continued: true })
+       .font('Helvetica')
+       .text(` ${reportData.riskAnalysis.portfolioRisk}/10`);
+    
+    // Create risk score visualization
+    const riskBarWidth = 200;
+    const riskScore = reportData.riskAnalysis.portfolioRisk;
+    const riskY = doc.y + 10;
+    
+    // Draw background bar
+    doc.fillColor('#e5e7eb')
+       .rect(50, riskY, riskBarWidth, 10)
+       .fill();
+    
+    // Calculate risk color (green to yellow to red)
+    let riskColor = '#ef4444'; // Red by default
+    if (riskScore <= 3) {
+      riskColor = '#10b981'; // Green for low risk
+    } else if (riskScore <= 6) {
+      riskColor = '#f59e0b'; // Yellow/amber for medium risk
+    }
+    
+    // Draw filled portion of bar
+    const filledWidth = (riskScore / 10) * riskBarWidth;
+    doc.fillColor(riskColor)
+       .rect(50, riskY, filledWidth, 10)
+       .fill();
+    
+    doc.moveDown(2);
+    
+    // Volatility
+    doc.font('Helvetica-Bold')
+       .text('Volatility:', 50, doc.y, { continued: true })
+       .font('Helvetica')
+       .text(` ${reportData.riskAnalysis.volatility.toFixed(2)}%`);
+    
+    // Diversification
+    doc.font('Helvetica-Bold')
+       .text('Diversification Score:', 50, doc.y, { continued: true })
+       .font('Helvetica')
+       .text(` ${reportData.riskAnalysis.diversificationScore}/10`);
+    
+    doc.moveDown();
+    
+    // Asset Allocation
+    if (reportData.riskAnalysis.assetAllocation.length > 0) {
+      doc.font('Helvetica-Bold')
+         .text('Asset Allocation', 50, doc.y);
+      
+      doc.moveDown(0.5);
+      
+      reportData.riskAnalysis.assetAllocation.forEach((asset, index) => {
+        // Add gray background for alternating rows
+        if (index % 2 === 0) {
+          doc.fillColor('#f3f4f6')
+             .rect(45, doc.y - 3, 220, 16)
+             .fill();
+        }
+        
+        doc.fillColor('#111827')
+           .font('Helvetica')
+           .text(asset.category, 50, doc.y, { continued: true, width: 150 })
+           .text(`${asset.percentage.toFixed(1)}%`);
+      });
+      
+      doc.moveDown(1);
+    }
+    
+    // Risk Factors
+    if (reportData.riskAnalysis.riskFactors.length > 0) {
+      doc.font('Helvetica-Bold')
+         .text('Key Risk Factors', 50, doc.y);
+      
+      doc.moveDown(0.5);
+      
+      reportData.riskAnalysis.riskFactors.forEach((factor, index) => {
+        // Add gray background for alternating rows
+        if (index % 2 === 0) {
+          doc.fillColor('#f3f4f6')
+             .rect(45, doc.y - 3, 520, 30)
+             .fill();
+        }
+        
+        // Calculate severity color
+        let severityColor = '#ef4444'; // Red for high severity
+        if (factor.severity <= 3) {
+          severityColor = '#10b981'; // Green for low severity
+        } else if (factor.severity <= 6) {
+          severityColor = '#f59e0b'; // Yellow/amber for medium severity
+        }
+        
+        doc.fillColor('#111827')
+           .font('Helvetica-Bold')
+           .text(factor.factor, 50, doc.y)
+           .font('Helvetica')
+           .text(factor.impact, 70, doc.y, { width: 430 });
+        
+        // Add severity indicator
+        doc.fillColor(severityColor)
+           .text(`Severity: ${factor.severity}/10`, 500, doc.y - 14);
+      });
+      
+      doc.moveDown();
+    }
+  }
+  
   // Add disclaimer section
   doc.moveDown();
   doc.fontSize(8)
@@ -281,6 +409,38 @@ export function generateCSVReport(res: Response, reportData: ReportData): void {
       csvContent += `${perf.date ? new Date(perf.date).toLocaleDateString() : 'N/A'},`;
       csvContent += `$${Number(perf.value).toFixed(2)}\n`;
     });
+    
+    csvContent += '\n';
+  }
+  
+  // Add risk analysis if available
+  if (reportData.riskAnalysis) {
+    csvContent += 'RISK ANALYSIS\n';
+    csvContent += `Portfolio Risk Score,${reportData.riskAnalysis.portfolioRisk}/10\n`;
+    csvContent += `Volatility,${reportData.riskAnalysis.volatility.toFixed(2)}%\n`;
+    csvContent += `Diversification Score,${reportData.riskAnalysis.diversificationScore}/10\n\n`;
+    
+    // Asset Allocation
+    if (reportData.riskAnalysis.assetAllocation.length > 0) {
+      csvContent += 'ASSET ALLOCATION\n';
+      csvContent += 'Category,Percentage\n';
+      
+      reportData.riskAnalysis.assetAllocation.forEach(asset => {
+        csvContent += `"${asset.category}",${asset.percentage.toFixed(1)}%\n`;
+      });
+      
+      csvContent += '\n';
+    }
+    
+    // Risk Factors
+    if (reportData.riskAnalysis.riskFactors.length > 0) {
+      csvContent += 'KEY RISK FACTORS\n';
+      csvContent += 'Factor,Impact,Severity\n';
+      
+      reportData.riskAnalysis.riskFactors.forEach(factor => {
+        csvContent += `"${factor.factor}","${factor.impact}",${factor.severity}/10\n`;
+      });
+    }
   }
   
   // Send the CSV content

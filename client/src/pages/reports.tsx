@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import {
   AreaChart,
   BarChart,
@@ -218,6 +219,7 @@ const performanceReportData = {
 };
 
 export default function Reports() {
+  const { toast } = useToast();
   const [timeframe, setTimeframe] = useState("ytd");
   const [selectedReportType, setSelectedReportType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -585,7 +587,16 @@ export default function Reports() {
                             <FileDown className="mr-2 h-4 w-4" />
                             Download PDF
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              toast({
+                                title: "Report regenerated",
+                                description: "Your report has been refreshed with the latest data."
+                              });
+                            }}
+                          >
                             <RefreshCcw className="mr-2 h-4 w-4" />
                             Regenerate
                           </Button>

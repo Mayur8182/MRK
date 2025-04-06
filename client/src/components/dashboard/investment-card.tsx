@@ -60,7 +60,7 @@ export default function InvestmentCard({ investment, onViewDetails }: Investment
             <Progress 
               value={Math.min(100, (currentValue / initialAmount) * 100)} 
               className={isPositive ? "bg-muted" : "bg-red-100"}
-              // Use className for the indicator style in Progress component
+              indicatorClassName={isPositive ? "bg-green-500" : "bg-red-500"}
             />
             <div className="text-right text-sm text-muted-foreground mt-1">
               ${Number(investment.amount).toLocaleString()} initial
