@@ -128,6 +128,19 @@ export function setupAuth(app: Express) {
       // Remove password from response
       const { password: _, ...safeUser } = newUser;
       
+      // Create a default portfolio for the new user
+      try {
+        await storage.createPortfolio({
+          name: `${newUser.name || newUser.username}'s Portfolio`,
+          description: "My primary investment portfolio",
+          user_id: newUser.id,
+          is_active: true
+        });
+        console.log(`Default portfolio created for user ${newUser.id}`);
+      } catch (portfolioError) {
+        console.error("Failed to create default portfolio:", portfolioError);
+      }
+
       // Automatically log in the new user
       req.login(newUser, async (err) => {
         if (err) return next(err);

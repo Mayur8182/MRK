@@ -9,6 +9,21 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
+// Define User type
+interface User {
+  id: number;
+  username: string;
+  name?: string;
+  email: string;
+  profile_image?: string | null;
+  notifications_enabled?: boolean;
+  preferences?: string | null;
+  role?: string;
+  created_at?: Date | null;
+  updated_at?: Date | null;
+  last_login?: Date | null;
+}
+
 export default function ProfileEdit() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -21,7 +36,7 @@ export default function ProfileEdit() {
   });
 
   // Fetch current user data
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading } = useQuery<User>({
     queryKey: ['/api/user'],
     staleTime: 60000
   });
@@ -40,15 +55,24 @@ export default function ProfileEdit() {
   }, [user]);
 
   // Handle form changes
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Define payload type
+  type UserProfilePayload = {
+    username: string;
+    name: string;
+    email: string;
+    password?: string;
+  };
+
   // Update user profile
-  const mutation = useMutation({
+  const mutation = useMutation<any, Error, UserProfilePayload>({
     mutationFn: async (data) => {
-      return await apiRequest("PUT", "/api/user/profile", data);
+      const response = await apiRequest("PUT", "/api/user/profile", data);
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
@@ -67,7 +91,7 @@ export default function ProfileEdit() {
     }
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Check if passwords match if password is being changed

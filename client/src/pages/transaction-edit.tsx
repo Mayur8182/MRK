@@ -203,7 +203,7 @@ export default function TransactionEdit() {
                   <SelectValue placeholder={formData.portfolioId ? "Select investment" : "Select a portfolio first"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None (Portfolio-level transaction)</SelectItem>
+                  <SelectItem value="0">None (Portfolio-level transaction)</SelectItem>
                   {investments?.map((investment) => (
                     <SelectItem key={investment.id} value={investment.id.toString()}>
                       {investment.name}
