@@ -22,7 +22,7 @@ export default function ProfileEdit() {
 
   // Fetch current user data
   const { data: user, isLoading } = useQuery({
-    queryKey: ['/api/users/me'],
+    queryKey: ['/api/user'],
     staleTime: 60000
   });
 
@@ -48,14 +48,10 @@ export default function ProfileEdit() {
   // Update user profile
   const mutation = useMutation({
     mutationFn: async (data) => {
-      return apiRequest('/api/users/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+      return await apiRequest("PUT", "/api/user/profile", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       toast({
         title: "Profile updated",
         description: "Your profile information has been updated successfully."

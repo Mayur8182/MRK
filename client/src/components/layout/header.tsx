@@ -9,9 +9,11 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Header() {
   const [location, navigate] = useLocation();
+  const { user, logoutMutation } = useAuth();
 
   // Get page title based on current location
   const getPageTitle = () => {
@@ -62,9 +64,11 @@ export default function Header() {
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2 cursor-pointer">
                 <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium uppercase">
-                  JD
+                  {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'U'}
                 </div>
-                <span className="hidden md:inline-block font-medium text-sm">John Doe</span>
+                <span className="hidden md:inline-block font-medium text-sm">
+                  {user?.name || user?.username || 'User'}
+                </span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </div>
             </DropdownMenuTrigger>
@@ -78,9 +82,12 @@ export default function Header() {
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+                <span>{logoutMutation.isPending ? "Logging out..." : "Log out"}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

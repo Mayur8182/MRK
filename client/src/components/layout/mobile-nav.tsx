@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface MobileNavItemProps {
   icon: React.ReactNode;
@@ -33,6 +34,7 @@ function MobileNavItem({ icon, label, path, isActive }: MobileNavItemProps) {
 export default function MobileNav() {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { logoutMutation } = useAuth();
 
   const navItems = [
     {
@@ -101,8 +103,14 @@ export default function MobileNav() {
                 <button className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
                   Help & Support
                 </button>
-                <button className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
-                  Log Out
+                <button 
+                  onClick={() => {
+                    logoutMutation.mutate();
+                    setIsOpen(false);
+                  }}
+                  className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  {logoutMutation.isPending ? "Logging out..." : "Log Out"}
                 </button>
               </nav>
             </div>
