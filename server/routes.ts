@@ -17,8 +17,11 @@ import { generatePDFReport, generateCSVReport } from "./reports";
 import {
   generateInvestmentRecommendations,
   analyzeMarketSentiment,
-  generateRiskAnalysis
+  generateRiskAnalysis,
+  processAIAssistantMessage,
+  type ChatHistoryMessage
 } from "./perplexity-api";
+import { v4 as uuidv4 } from 'uuid';
 
 import { WebSocket, WebSocketServer } from 'ws';
 
@@ -884,6 +887,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get email service status
+  // AI Assistant endpoints
+  app.post("/api/ai-assistant/chat", protectedRoute, async (req: Request, res: Response) => {
+    try {
+      const { message, history } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+      
+      // Get user data to provide context
+      const userId = (req.user as User).id;
+      const userPortfolios = await storage.getPortfolios(userId);
+      
+      // Get user's investments for context
+      let userInvestments: any[] = [];
+      if (userPortfolios.length > 0) {
+        const portfolioIds = userPortfolios.map(p => p.id);
+        const allInvestments = await storage.getInvestments();
+        userInvestments = allInvestments.filter(investment => 
+          portfolioIds.includes(investment.portfolio_id)
+        );
+      }
+      
+      // Get market data for context
+      let marketData = {};
+      try {
+        const indices = await marketAPI.getMarketIndices();
+        const latestNews = await marketAPI.getFinancialNews();
+        marketData = { indices, latestNews };
+      } catch (marketError) {
+        console.warn("Could not fetch market data for AI context:", marketError);
+        // Continue even if market data isn't available
+      }
+      
+      // Prepare user context for the AI
+      const userData = {
+        portfolios: userPortfolios,
+        investments: userInvestments,
+        marketData
+      };
+      
+      // Convert chat history if provided
+      const chatHistory: ChatHistoryMessage[] = Array.isArray(history) ? history : [];
+      
+      // Process the message
+      const aiResponse = await processAIAssistantMessage(message, chatHistory, userData);
+      
+      res.json(aiResponse);
+    } catch (error: any) {
+      console.error("Error in AI assistant chat:", error);
+      res.status(500).json({ 
+        error: "Failed to process message",
+        message: error.message
+      });
+    }
+  });
+  
   app.get("/api/system/email-status", protectedRoute, async (req: Request, res: Response) => {
     try {
       const status = email.getEmailStatus();

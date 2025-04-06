@@ -21,7 +21,9 @@ import Reports from "@/pages/reports";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import MobileNav from "@/components/layout/mobile-nav";
+import { AIAssistant } from "@/components/ai-assistant";
 import { AuthProvider } from "@/hooks/use-auth";
+import { AIAssistantProvider } from "@/hooks/ai-assistant-provider";
 import { ProtectedRoute } from "@/lib/protected-route";
 import AuthPage from "@/pages/auth-page";
 import AIRecommendations from "@/pages/ai-recommendations";
@@ -195,8 +197,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
-        <Toaster />
+        <AIAssistantProvider>
+          <Router />
+          <AIAssistant />
+          <Toaster />
+        </AIAssistantProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

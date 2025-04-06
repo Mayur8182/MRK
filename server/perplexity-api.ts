@@ -5,6 +5,13 @@ interface PerplexityMessage {
   content: string;
 }
 
+export interface ChatHistoryMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
 interface PerplexityResponse {
   id: string;
   model: string;
@@ -245,5 +252,83 @@ export async function generateRiskAnalysis(portfolioData: any, marketData: any):
   } catch (error: any) {
     console.error('Failed to generate risk analysis:', error);
     throw new Error(`Failed to generate risk analysis: ${error.message}`);
+  }
+}
+
+/**
+ * Process a chat message for the AI assistant
+ * @param message User's message
+ * @param history Previous conversation history
+ * @param userData User and portfolio data for context
+ * @returns Assistant's response
+ */
+export async function processAIAssistantMessage(
+  message: string, 
+  history: ChatHistoryMessage[],
+  userData?: any
+): Promise<ChatHistoryMessage> {
+  try {
+    // Convert chat history to Perplexity format
+    const perplexityMessages: PerplexityMessage[] = [
+      {
+        role: 'system',
+        content: 'You are an AI investment assistant for a portfolio management platform. ' +
+          'Your primary purpose is to help users with market analysis, risk assessment, and investment recommendations. ' +
+          'Use your knowledge of financial markets, geopolitical trends, and economic data to provide thoughtful advice. ' +
+          'You can analyze market sentiment, suggest portfolio adjustments, explain market trends, and advise on risk management. ' +
+          'Always be respectful, clear, and helpful. When making recommendations, explain your reasoning. ' +
+          'Provide concise responses when appropriate, but be thorough when analyzing complex topics. ' +
+          'If you don\'t know something, admit it rather than making up information. ' +
+          'You may reference citations when providing market insights. ' +
+          'Your goal is to help users make more informed investment decisions.'
+      }
+    ];
+
+    // Add history (limit to most recent messages)
+    const recentHistory = history.slice(-10); // Only use the 10 most recent messages
+    recentHistory.forEach(msg => {
+      perplexityMessages.push({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      });
+    });
+
+    // Add user context if available
+    if (userData) {
+      perplexityMessages.push({
+        role: 'system',
+        content: `Additional context about the user: ${JSON.stringify(userData, null, 2)}`
+      });
+    }
+
+    // Add current message
+    perplexityMessages.push({
+      role: 'user',
+      content: message
+    });
+
+    const response = await queryPerplexity(perplexityMessages, {
+      temperature: 0.7, // Slightly higher temperature for more dynamic responses
+      max_tokens: 1500
+    });
+
+    const assistantResponse = response.choices[0].message.content;
+    
+    return {
+      id: response.id,
+      role: 'assistant',
+      content: assistantResponse,
+      timestamp: new Date()
+    };
+  } catch (error: any) {
+    console.error('Failed to process AI assistant message:', error);
+    
+    // Return a graceful error message
+    return {
+      id: `error-${Date.now()}`,
+      role: 'assistant',
+      content: "I'm sorry, I encountered an error processing your request. Please try again or contact support if the problem persists.",
+      timestamp: new Date()
+    };
   }
 }
