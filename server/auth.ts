@@ -13,7 +13,21 @@ import { sendWelcomeEmail } from "./email";
 // Extend Express.User to contain our user type
 declare global {
   namespace Express {
-    interface User extends User {}
+    // Define the user interface to match what's in the storage
+    interface User {
+      id: number;
+      username: string;
+      email: string;
+      password: string;
+      name?: string;
+      profile_image?: string | null;
+      preferences?: string | null;
+      notifications_enabled?: boolean;
+      role?: string;
+      created_at: Date | null;
+      updated_at?: Date | null;
+      last_login?: Date | null;
+    }
   }
 }
 
@@ -38,9 +52,11 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
 const PgSessionStore = connectPgSimple(session);
 
 export function setupAuth(app: Express) {
-  // Initialize session
+  // Initialize session with a secure random secret (better practice for production)
+  const sessionSecret = process.env.SESSION_SECRET || require('crypto').randomBytes(32).toString('hex');
+  
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "portfolio-management-secret-key",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {

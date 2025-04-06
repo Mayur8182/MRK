@@ -1,36 +1,49 @@
 import nodemailer from 'nodemailer';
 
-// Create transporter with environment variables
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.EMAIL_USER || "mkbharvad534@gmail.com", 
-    pass: process.env.EMAIL_PASS
-  }
-});
+// Check for necessary email credentials
+let transporter: nodemailer.Transporter;
 
-// Verify transporter configuration
-transporter.verify((error) => {
-  if (error) {
-    console.error("Email configuration error:", error);
-  } else {
-    console.log("SMTP server is ready to send emails");
-  }
-});
+// Only create a transporter if we have the necessary credentials
+if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+
+  // Verify transporter configuration
+  transporter.verify((error) => {
+    if (error) {
+      console.error("Email configuration error:", error);
+    } else {
+      console.log("SMTP server is ready to send emails");
+    }
+  });
+} else {
+  console.warn("Email credentials not provided. Email functionality will be disabled.");
+}
 
 /**
  * Sends an email notification
  * @param to Recipient email address
  * @param subject Email subject
  * @param html HTML content of the email
- * @returns Promise resolving to the sent message info
+ * @returns Promise resolving to the sent message info or null if email is disabled
  */
 export async function sendEmail(to: string, subject: string, html: string) {
+  // Return early if email functionality is disabled
+  if (!transporter) {
+    console.warn("Email sending skipped: Email functionality is disabled due to missing credentials");
+    return null;
+  }
+  
   try {
     const info = await transporter.sendMail({
-      from: `"Portfolio Manager" <${process.env.EMAIL_USER || "mkbharvad534@gmail.com"}>`,
+      from: `"Portfolio Manager" <${process.env.EMAIL_USER || "portfolio-manager@example.com"}>`,
       to,
       subject,
       html
@@ -38,9 +51,11 @@ export async function sendEmail(to: string, subject: string, html: string) {
     
     console.log(`Email sent: ${info.messageId}`);
     return info;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to send email:", error);
-    throw new Error(`Failed to send email: ${error.message}`);
+    // Don't throw, just log the error
+    console.warn(`Failed to send email to ${to}: ${error.message}`);
+    return null;
   }
 }
 
