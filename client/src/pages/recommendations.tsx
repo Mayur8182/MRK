@@ -4,30 +4,41 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import {
+  AlertCircle,
   AreaChart,
+  ArrowDownRight,
+  ArrowUpRight,
   BarChart,
-  LineChart,
-  PieChart,
+  BarChart3,
   Briefcase,
+  Calculator,
   ChevronRight,
   CircleDollarSign,
   Clock,
   CreditCard,
+  ExternalLink,
   FileText,
   Filter,
+  Globe,
   Info,
   Lightbulb,
+  LineChart,
   LineChart as LineChartIcon,
   PercentCircle,
+  PieChart,
   PieChart as PieChartIcon,
   Plus,
+  Receipt,
   RefreshCcw,
+  RefreshCw,
   Search,
   Shuffle,
   Star,
   ThumbsUp,
+  TrendingUp,
   Zap,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
@@ -86,7 +97,225 @@ function RecommendationCard({
   );
 }
 
-// Sample data for recommendations
+// Sample data for sentiment analysis
+const sentimentAnalysisData = [
+  {
+    asset: "AAPL",
+    name: "Apple Inc.",
+    overallSentiment: 78, // 0-100 scale
+    change: 5.3,
+    trend: "up",
+    sources: {
+      news: 82,
+      social: 75,
+      blogs: 76,
+      forums: 68
+    },
+    keyTopics: ["iPhone sales", "AI integration", "App Store revenue", "China market"],
+    recentHeadlines: [
+      "Apple's AI Strategy Impresses Investors and Analysts",
+      "New iPhone Production Increases Amid Strong Demand",
+      "App Store Revenue Hits Record High in Q3"
+    ]
+  },
+  {
+    asset: "MSFT",
+    name: "Microsoft Corporation",
+    overallSentiment: 83,
+    change: 7.2,
+    trend: "up",
+    sources: {
+      news: 86,
+      social: 80,
+      blogs: 84,
+      forums: 78
+    },
+    keyTopics: ["Cloud growth", "AI investments", "Enterprise adoption", "Azure expansion"],
+    recentHeadlines: [
+      "Microsoft Azure Growth Exceeds Expectations",
+      "Enterprise AI Adoption Accelerates Microsoft Revenue",
+      "New Cloud Infrastructure Investments Announced"
+    ]
+  },
+  {
+    asset: "AMZN",
+    name: "Amazon.com, Inc.",
+    overallSentiment: 72,
+    change: -2.1,
+    trend: "down",
+    sources: {
+      news: 70,
+      social: 74,
+      blogs: 68,
+      forums: 76
+    },
+    keyTopics: ["E-commerce trends", "AWS performance", "Logistics costs", "Competitive landscape"],
+    recentHeadlines: [
+      "Amazon Faces Increasing Competition in E-commerce Space",
+      "AWS Remains Strong Despite Cloud Spending Slowdown",
+      "New Fulfillment Centers to Improve Delivery Times"
+    ]
+  },
+  {
+    asset: "GOOGL",
+    name: "Alphabet Inc.",
+    overallSentiment: 75,
+    change: 3.6,
+    trend: "up",
+    sources: {
+      news: 78,
+      social: 72,
+      blogs: 74,
+      forums: 70
+    },
+    keyTopics: ["Ad revenue", "AI developments", "Regulatory concerns", "Search market share"],
+    recentHeadlines: [
+      "Google's AI-Powered Search Drives Engagement",
+      "Digital Ad Spending Returns to Growth, Boosting Alphabet",
+      "Antitrust Concerns Remain But Impact Appears Limited"
+    ]
+  },
+  {
+    asset: "META",
+    name: "Meta Platforms, Inc.",
+    overallSentiment: 65,
+    change: 8.4,
+    trend: "up",
+    sources: {
+      news: 68,
+      social: 62,
+      blogs: 64,
+      forums: 66
+    },
+    keyTopics: ["Ad targeting", "Metaverse investments", "User engagement", "Threads platform"],
+    recentHeadlines: [
+      "Meta's Cost Cutting Measures Boost Profitability",
+      "Instagram Growth Continues Despite Competition",
+      "Threads Sees Increasing User Adoption"
+    ]
+  }
+];
+
+// Global markets data
+const globalMarketsData = {
+  regions: [
+    {
+      name: "North America",
+      sentiment: 74,
+      change: 2.3,
+      trend: "up",
+      topMarkets: [
+        { market: "S&P 500", performance: 3.2, sentiment: 73 },
+        { market: "NASDAQ", performance: 4.1, sentiment: 75 },
+        { market: "TSX", performance: 1.8, sentiment: 68 }
+      ]
+    },
+    {
+      name: "Europe",
+      sentiment: 68,
+      change: -1.2,
+      trend: "down",
+      topMarkets: [
+        { market: "FTSE 100", performance: -0.8, sentiment: 65 },
+        { market: "DAX", performance: -1.5, sentiment: 62 },
+        { market: "CAC 40", performance: -1.2, sentiment: 64 }
+      ]
+    },
+    {
+      name: "Asia-Pacific",
+      sentiment: 71,
+      change: 3.7,
+      trend: "up",
+      topMarkets: [
+        { market: "Nikkei 225", performance: 4.2, sentiment: 74 },
+        { market: "Hang Seng", performance: 2.8, sentiment: 68 },
+        { market: "ASX 200", performance: 1.9, sentiment: 72 }
+      ]
+    }
+  ],
+  geopoliticalRisks: [
+    {
+      region: "Middle East",
+      riskLevel: "High",
+      impact: "Moderate",
+      factors: ["Regional tensions", "Oil supply disruptions"],
+      sentiment: 42
+    },
+    {
+      region: "East Asia",
+      riskLevel: "Moderate",
+      impact: "Low-Moderate",
+      factors: ["Trade negotiations", "Technology restrictions"],
+      sentiment: 56
+    },
+    {
+      region: "Eastern Europe",
+      riskLevel: "Moderate-High",
+      impact: "Moderate",
+      factors: ["Regional conflicts", "Energy supply concerns"],
+      sentiment: 48
+    }
+  ],
+  behavioralInsights: [
+    {
+      metric: "Market Fear/Greed Index",
+      value: 65,
+      interpretation: "Mild Greed",
+      recommendation: "Consider taking some profits in overextended positions"
+    },
+    {
+      metric: "Investor Sentiment Survey",
+      value: 58,
+      interpretation: "Moderately Bullish",
+      recommendation: "Maintain balanced exposure but be selective with new positions"
+    },
+    {
+      metric: "Retail Trading Volume",
+      value: "Elevated",
+      interpretation: "Potential froth in certain segments",
+      recommendation: "Focus on quality companies with solid fundamentals"
+    }
+  ]
+};
+
+// Tax optimization opportunities
+const taxOptimizationData = [
+  {
+    type: "Tax-Loss Harvesting",
+    potential: "High",
+    estimatedSavings: "$3,250",
+    positions: [
+      { symbol: "VZ", name: "Verizon", loss: "$1,840", replacementIdea: "T (AT&T) or TMUS (T-Mobile)" },
+      { symbol: "INTC", name: "Intel", loss: "$1,250", replacementIdea: "AMD or NVDA" },
+      { symbol: "CVX", name: "Chevron", loss: "$960", replacementIdea: "XOM or BP" }
+    ],
+    considerations: "30-day wash sale rule applies; consider sector ETFs as alternatives"
+  },
+  {
+    type: "Tax-Efficient Asset Location",
+    potential: "Medium",
+    estimatedSavings: "$1,850/year",
+    recommendations: [
+      "Move dividend stocks to tax-advantaged accounts",
+      "Keep growth stocks in taxable accounts for long-term capital gains",
+      "Consider municipal bonds for taxable accounts"
+    ],
+    considerations: "Balance tax considerations with overall asset allocation targets"
+  },
+  {
+    type: "Tax-Efficient Withdrawal Strategy",
+    potential: "Medium-High",
+    estimatedSavings: "$4,200/year (in retirement)",
+    recommendations: [
+      "Optimize withdrawal sequence across account types",
+      "Manage income brackets through selective Roth conversions",
+      "Consider charitable giving strategies for appreciated securities"
+    ],
+    considerations: "Requires coordination with overall retirement planning"
+  }
+];
+
+// Sample data for AI-powered recommendations
 const investmentOpportunitiesData = [
   {
     icon: LineChartIcon,
@@ -263,6 +492,9 @@ export default function Recommendations() {
         investmentOpportunities: investmentOpportunitiesData,
         portfolioOptimizations: portfolioOptimizationsData,
         riskAdjustments: riskAdjustmentsData,
+        sentimentAnalysis: sentimentAnalysisData,
+        globalMarkets: globalMarketsData,
+        taxOptimization: taxOptimizationData,
         riskProfile: {
           score: 68,
           category: "Moderate Growth",
@@ -320,10 +552,13 @@ export default function Recommendations() {
 
       {/* Recommendation Tabs */}
       <Tabs defaultValue="opportunities" className="w-full">
-        <TabsList className="grid grid-cols-3 w-full md:w-auto">
+        <TabsList className="grid grid-cols-6 w-full">
           <TabsTrigger value="opportunities">Investment Opportunities</TabsTrigger>
           <TabsTrigger value="optimizations">Portfolio Optimizations</TabsTrigger>
           <TabsTrigger value="adjustments">Risk Adjustments</TabsTrigger>
+          <TabsTrigger value="sentiment">Sentiment Analysis</TabsTrigger>
+          <TabsTrigger value="global">Global Markets</TabsTrigger>
+          <TabsTrigger value="tax">Tax Harvesting</TabsTrigger>
         </TabsList>
         
         {/* Investment Opportunities Tab */}
@@ -441,6 +676,382 @@ export default function Recommendations() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        {/* Sentiment Analysis Tab */}
+        <TabsContent value="sentiment">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <h3 className="font-medium">Market Sentiment Analysis</h3>
+            </div>
+            <Button variant="outline" size="sm">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh Data
+            </Button>
+          </div>
+          
+          {/* Sentiment Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Market Sentiment Overview</CardTitle>
+                <CardDescription>Overall market sentiment based on news and social media</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg">
+                    <div className="text-4xl font-bold text-primary mb-1">74</div>
+                    <div className="text-sm text-muted-foreground">Overall Sentiment</div>
+                    <div className="flex items-center text-green-500 mt-2">
+                      <ArrowUpRight className="h-4 w-4 mr-1" />
+                      <span className="text-sm font-medium">+3.2 pts</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">News</span>
+                      <div className="flex items-center">
+                        <Progress value={78} className="h-2 w-[100px] mr-2" />
+                        <span className="text-sm font-medium">78</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Social</span>
+                      <div className="flex items-center">
+                        <Progress value={70} className="h-2 w-[100px] mr-2" />
+                        <span className="text-sm font-medium">70</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Blogs</span>
+                      <div className="flex items-center">
+                        <Progress value={76} className="h-2 w-[100px] mr-2" />
+                        <span className="text-sm font-medium">76</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Forums</span>
+                      <div className="flex items-center">
+                        <Progress value={72} className="h-2 w-[100px] mr-2" />
+                        <span className="text-sm font-medium">72</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Sentiment Trend</CardTitle>
+                <CardDescription>Sentiment evolution over the past 30 days</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="w-full h-[180px] bg-muted/50 rounded-lg flex items-center justify-center">
+                  <BarChart3 className="h-8 w-8 text-muted-foreground/50" />
+                  <span className="ml-2 text-sm text-muted-foreground">Chart: Sentiment trend (30 days)</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Asset Sentiment Table */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Asset-Specific Sentiment</CardTitle>
+              <CardDescription>Sentiment analysis for individual assets in your portfolio</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Asset</TableHead>
+                    <TableHead>Sentiment</TableHead>
+                    <TableHead>Change</TableHead>
+                    <TableHead>News</TableHead>
+                    <TableHead>Social</TableHead>
+                    <TableHead>Key Topics</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recommendationsData?.sentimentAnalysis.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <div className="font-medium">{item.asset}</div>
+                        <div className="text-xs text-muted-foreground">{item.name}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Progress 
+                            value={item.overallSentiment} 
+                            className="h-2 w-[80px] mr-2"
+                            indicatorClassName={
+                              item.overallSentiment >= 70 ? "bg-green-500" :
+                              item.overallSentiment >= 50 ? "bg-amber-500" : "bg-red-500"
+                            }
+                          />
+                          <span className="font-medium">{item.overallSentiment}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className={`flex items-center ${item.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                          {item.trend === 'up' ? 
+                            <ArrowUpRight className="h-4 w-4 mr-1" /> : 
+                            <ArrowDownRight className="h-4 w-4 mr-1" />
+                          }
+                          <span>{item.change.toFixed(1)}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.sources.news}</TableCell>
+                      <TableCell>{item.sources.social}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {item.keyTopics.slice(0, 2).map((topic, i) => (
+                            <Badge key={i} variant="outline" className="text-xs">{topic}</Badge>
+                          ))}
+                          {item.keyTopics.length > 2 && (
+                            <Badge variant="outline" className="text-xs">+{item.keyTopics.length - 2} more</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Global Markets Tab */}
+        <TabsContent value="global">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-primary" />
+              <h3 className="font-medium">Global Markets Analysis</h3>
+            </div>
+            <div className="text-sm text-muted-foreground">Last updated: Today, 8:30 AM</div>
+          </div>
+          
+          {/* Regional Sentiment */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {recommendationsData?.globalMarkets.regions.map((region, index) => (
+              <Card key={index} className={region.trend === "up" ? "border-green-200" : "border-red-200"}>
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <CardTitle className="text-lg">{region.name}</CardTitle>
+                    <div className={`flex items-center ${region.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                      {region.trend === 'up' ? 
+                        <ArrowUpRight className="h-4 w-4 mr-1" /> : 
+                        <ArrowDownRight className="h-4 w-4 mr-1" />
+                      }
+                      <span>{region.change.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                  <CardDescription>Regional market sentiment: {region.sentiment}/100</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Market</TableHead>
+                        <TableHead>Perf.</TableHead>
+                        <TableHead>Sentiment</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {region.topMarkets.map((market, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{market.market}</TableCell>
+                          <TableCell className={market.performance >= 0 ? "text-green-500" : "text-red-500"}>
+                            {market.performance >= 0 ? "+" : ""}{market.performance.toFixed(1)}%
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <Progress 
+                                value={market.sentiment} 
+                                className="h-2 w-[60px] mr-2"
+                                indicatorClassName={
+                                  market.sentiment >= 70 ? "bg-green-500" :
+                                  market.sentiment >= 50 ? "bg-amber-500" : "bg-red-500"
+                                }
+                              />
+                              <span>{market.sentiment}</span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          {/* Geopolitical Risks */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Geopolitical Risk Analysis</CardTitle>
+                <CardDescription>Current geopolitical factors affecting markets</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Region</TableHead>
+                      <TableHead>Risk Level</TableHead>
+                      <TableHead>Impact</TableHead>
+                      <TableHead>Sentiment</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recommendationsData?.globalMarkets.geopoliticalRisks.map((risk, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{risk.region}</TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            risk.riskLevel.includes("High") ? "destructive" :
+                            risk.riskLevel.includes("Moderate") ? "warning" : "outline"
+                          }>
+                            {risk.riskLevel}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{risk.impact}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <Progress 
+                              value={risk.sentiment} 
+                              className="h-2 w-[60px] mr-2"
+                              indicatorClassName={
+                                risk.sentiment >= 70 ? "bg-green-500" :
+                                risk.sentiment >= 50 ? "bg-amber-500" : "bg-red-500"
+                              }
+                            />
+                            <span>{risk.sentiment}</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Behavioral Market Insights</CardTitle>
+                <CardDescription>Behavioral economics indicators and analysis</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {recommendationsData?.globalMarkets.behavioralInsights.map((insight, index) => (
+                    <div key={index} className="pb-3 border-b last:border-0 last:pb-0">
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="font-medium">{insight.metric}</div>
+                        <div className="font-bold">{insight.value}</div>
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-1">{insight.interpretation}</div>
+                      <div className="text-xs flex items-center">
+                        <Info className="h-3 w-3 text-primary mr-1" />
+                        <span>{insight.recommendation}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        {/* Tax Harvesting Tab */}
+        <TabsContent value="tax">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-primary" />
+              <h3 className="font-medium">Tax Optimization Opportunities</h3>
+            </div>
+            <Button variant="outline" size="sm">
+              <Calculator className="mr-2 h-4 w-4" />
+              Run Custom Analysis
+            </Button>
+          </div>
+          
+          {/* Tax-Loss Harvesting Card */}
+          <Card className="mb-6 border-green-200">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-lg">Tax-Loss Harvesting Opportunities</CardTitle>
+                <Badge variant="outline" className="bg-green-50">Estimated savings: {recommendationsData?.taxOptimization[0].estimatedSavings}</Badge>
+              </div>
+              <CardDescription>Potential for tax-loss harvesting in your taxable accounts</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Symbol</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Unrealized Loss</TableHead>
+                    <TableHead>Replacement Ideas</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recommendationsData?.taxOptimization[0].positions.map((position, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{position.symbol}</TableCell>
+                      <TableCell>{position.name}</TableCell>
+                      <TableCell className="text-red-500">{position.loss}</TableCell>
+                      <TableCell>{position.replacementIdea}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" className="h-7 px-3">
+                          <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span>
+                    <span className="font-medium">Important:</span> {recommendationsData?.taxOptimization[0].considerations}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Other Tax Optimization Strategies */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {recommendationsData?.taxOptimization.slice(1).map((strategy, index) => (
+              <Card key={index}>
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg">{strategy.type}</CardTitle>
+                    <Badge variant="outline">Potential: {strategy.potential}</Badge>
+                  </div>
+                  <CardDescription>Estimated annual savings: {strategy.estimatedSavings}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc list-inside space-y-1 mb-4">
+                    {strategy.recommendations?.map((rec, i) => (
+                      <li key={i} className="text-sm">{rec}</li>
+                    ))}
+                  </ul>
+                  <div className="p-3 bg-muted/50 rounded-lg text-sm">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span>{strategy.considerations}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
