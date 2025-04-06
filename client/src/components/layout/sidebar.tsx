@@ -9,6 +9,13 @@ import {
   Settings,
   HelpCircle,
   LogOut,
+  Shield,
+  BarChart4,
+  Lightbulb,
+  Bell,
+  FileText,
+  User,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -45,24 +52,54 @@ export default function Sidebar() {
       path: "/",
     },
     {
-      icon: <BriefcaseBusiness size={18} />,
-      label: "Portfolios",
-      path: "/portfolios",
-    },
-    {
       icon: <LineChart size={18} />,
       label: "Investments",
       path: "/investments",
     },
     {
-      icon: <History size={18} />,
+      icon: <Shield size={18} />,
+      label: "Risk Analysis",
+      path: "/risk-analysis",
+    },
+    {
+      icon: <Settings size={18} />,
+      label: "Settings",
+      path: "/settings",
+    },
+    {
+      icon: <BriefcaseBusiness size={18} />,
+      label: "Portfolio",
+      path: "/portfolios",
+    },
+    {
+      icon: <CreditCard size={18} />,
       label: "Transactions",
       path: "/transactions",
     },
     {
-      icon: <Users size={18} />,
-      label: "Users",
-      path: "/users",
+      icon: <BarChart4 size={18} />,
+      label: "Analytics",
+      path: "/analytics",
+    },
+    {
+      icon: <Lightbulb size={18} />,
+      label: "Recommendations",
+      path: "/recommendations",
+    },
+    {
+      icon: <Bell size={18} />,
+      label: "Alerts",
+      path: "/alerts",
+    },
+    {
+      icon: <FileText size={18} />,
+      label: "Reports",
+      path: "/reports",
+    },
+    {
+      icon: <User size={18} />,
+      label: "Profile",
+      path: "/profile-edit",
     },
   ];
 
@@ -97,18 +134,6 @@ export default function Sidebar() {
 
       <div className="p-4 border-t mt-auto">
         <div className="space-y-1">
-          <Link href="/settings">
-            <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground" size="sm">
-              <Settings size={18} className="mr-3" />
-              Settings
-            </Button>
-          </Link>
-          <Link href="/profile-edit">
-            <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground" size="sm">
-              <Users size={18} className="mr-3" />
-              Profile
-            </Button>
-          </Link>
           <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground" size="sm">
             <HelpCircle size={18} className="mr-3" />
             Help & Support

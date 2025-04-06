@@ -13,6 +13,11 @@ import PortfolioEdit from "@/pages/portfolio-edit";
 import Users from "@/pages/users";
 import ProfileEdit from "@/pages/profile-edit";
 import Settings from "@/pages/settings";
+import RiskAnalysis from "@/pages/risk-analysis";
+import Analytics from "@/pages/analytics";
+import Recommendations from "@/pages/recommendations";
+import Alerts from "@/pages/alerts";
+import Reports from "@/pages/reports";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import MobileNav from "@/components/layout/mobile-nav";
@@ -41,6 +46,13 @@ function Router() {
             <Route path="/portfolios" component={Portfolios} />
             <Route path="/portfolios/new" component={PortfolioEdit} />
             <Route path="/portfolios/:id/edit" component={PortfolioEdit} />
+            
+            {/* Analytics routes */}
+            <Route path="/risk-analysis" component={RiskAnalysis} />
+            <Route path="/analytics" component={Analytics} />
+            <Route path="/recommendations" component={Recommendations} />
+            <Route path="/alerts" component={Alerts} />
+            <Route path="/reports" component={Reports} />
             
             {/* User and settings routes */}
             <Route path="/users" component={Users} />
