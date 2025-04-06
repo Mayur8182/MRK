@@ -2,7 +2,7 @@ import { useLocation, Link } from "wouter";
 import {
   LayoutDashboard,
   LineChart,
-  BriefcaseBusiness,
+  Briefcase,  // Changed from BriefcaseBusiness
   Clock, // Changed from History
   Menu,
   Activity,
@@ -44,7 +44,7 @@ export default function MobileNav() {
       path: "/",
     },
     {
-      icon: <BriefcaseBusiness size={20} />,
+      icon: <Briefcase size={20} />, // Changed from BriefcaseBusiness
       label: "Portfolios",
       path: "/portfolios",
     },

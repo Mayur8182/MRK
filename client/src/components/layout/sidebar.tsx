@@ -3,7 +3,7 @@ import { useLocation, Link } from "wouter";
 import {
   LayoutDashboard,
   LineChart,
-  BriefcaseBusiness,
+  Briefcase,  // Changed from BriefcaseBusiness
   Clock, // Changed from History
   Users,
   Settings,
@@ -68,7 +68,7 @@ export default function Sidebar() {
       path: "/settings",
     },
     {
-      icon: <BriefcaseBusiness size={18} />,
+      icon: <Briefcase size={18} />,
       label: "Portfolio",
       path: "/portfolios",
     },
@@ -114,7 +114,7 @@ export default function Sidebar() {
       <div className="p-4 border-b">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 bg-primary rounded-md flex items-center justify-center">
-            <BriefcaseBusiness className="h-5 w-5 text-white" />
+            <Briefcase className="h-5 w-5 text-white" />
           </div>
           <h1 className="font-semibold text-lg">PortfolioManager</h1>
         </div>

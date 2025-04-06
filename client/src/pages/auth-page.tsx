@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { EyeIcon, EyeOffIcon, LockKeyholeIcon, MailIcon, UserIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, LockIcon, MailIcon, UserIcon } from "lucide-react";
 import { useState } from "react";
 
 // Login Form Schema
@@ -151,7 +151,7 @@ export default function AuthPage() {
                             <FormLabel>Password</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <LockKeyholeIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <LockIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                   type={showLoginPassword ? "text" : "password"}
                                   placeholder="Enter your password"
@@ -257,7 +257,7 @@ export default function AuthPage() {
                             <FormLabel>Password</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <LockKeyholeIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <LockIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                   type={showRegisterPassword ? "text" : "password"}
                                   placeholder="Create a password"
@@ -291,7 +291,7 @@ export default function AuthPage() {
                             <FormLabel>Confirm Password</FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <LockKeyholeIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <LockIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                   type={showConfirmPassword ? "text" : "password"}
                                   placeholder="Confirm your password"

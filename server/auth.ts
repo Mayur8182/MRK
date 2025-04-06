@@ -49,8 +49,8 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
 }
 
 export function setupAuth(app: Express) {
-  // Initialize session with a secure random secret (better practice for production)
-  const sessionSecret = process.env.SESSION_SECRET || require('crypto').randomBytes(32).toString('hex');
+  // Initialize session with a secure random secret
+  const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
   
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret,

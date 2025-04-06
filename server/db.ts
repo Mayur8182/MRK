@@ -6,17 +6,14 @@ import { MongoClient } from "mongodb";
 
 neonConfig.webSocketConstructor = ws;
 
-if (!process.env.DATABASE_URL) {
+if (!process.env.MONGODB_URI) {
   throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
+    "MONGODB_URI must be set. Did you forget to configure the database connection?",
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
-
 // MongoDB Atlas connection
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://mkbharvad8080:Mkb%408080@mk.jnchrec.mongodb.net/p2p_system?retryWrites=true&w=majority&ssl=true&tlsAllowInvalidCertificates=true";
+const MONGODB_URI = process.env.MONGODB_URI;
 
 export const mongoClient = new MongoClient(MONGODB_URI);
 export const mongodb = mongoClient.db("p2p_system");

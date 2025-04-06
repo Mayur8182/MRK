@@ -28,7 +28,7 @@ import {
   Lightbulb,
   LineChart,
   LineChart as LineChartIcon,
-  PercentCircle,
+  Percent,
   PieChart,
   PieChart as PieChartIcon,
   Plus,
@@ -426,7 +426,7 @@ const portfolioOptimizationsData = [
     action: "See Alternatives",
   },
   {
-    icon: PercentCircle,
+    icon: Percent,
     iconColor: "bg-green-500",
     title: "Tax-Loss Harvesting",
     description: "Optimize tax efficiency by harvesting losses while maintaining market exposure",
