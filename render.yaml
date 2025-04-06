@@ -9,7 +9,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
-        sync: false
+        value: mongodb+srv://mkbharvad8080:Mkb%408080@cluster0.a82h2.mongodb.net/?retryWrites=true&w=majority
+      - key: PORT
+        value: "5000"
       - key: FMP_API_KEY
         sync: false
       - key: ALPHA_VANTAGE_API_KEY
@@ -18,3 +20,10 @@ services:
         sync: false
     healthCheckPath: /
     autoDeploy: true
+    buildFilter:
+      paths:
+        - client/**
+        - server/**
+        - shared/**
+        - package.json
+        - package-lock.json
