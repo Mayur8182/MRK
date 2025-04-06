@@ -27,11 +27,21 @@ const createFakeTransporter = () => {
 
 // Initialize email transporter function - can be called multiple times to retry connections
 function initEmailTransporter() {
-  // Only create a real transporter if we have the necessary credentials
+  // Always create a fake transporter for development to prevent blocking on email issues
+  if (process.env.NODE_ENV !== 'production') {
+    console.log("⚠️ Using fake email transport for development. Emails will be logged but not sent.");
+    transporter = createFakeTransporter() as any;
+    emailEnabled = true;
+    emailFailedAttempts = 0;
+    lastEmailError = null;
+    return;
+  }
+  
+  // Only try to create a real transporter if we have the necessary credentials
   if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     try {
-      // For Gmail, use OAuth2 tokens or App Password instead of regular password
-      // For most reliable results with Gmail, use App Passwords: https://myaccount.google.com/apppasswords
+      // For Gmail, we need to use an App Password instead of regular password
+      // Create one at: https://myaccount.google.com/apppasswords
       transporter = nodemailer.createTransport({
         service: 'gmail',  // Using built-in nodemailer Gmail configuration
         auth: {
@@ -50,15 +60,7 @@ function initEmailTransporter() {
           console.warn("Please ensure your Gmail account has 'Less secure app access' enabled or you're using an App Password");
           lastEmailError = error.message || "Unknown error";
           emailEnabled = false;
-          
-          // If we can't use the real transporter, use the fake one in development
-          if (process.env.NODE_ENV !== 'production') {
-            console.log("⚠️ Using fake email transport for development. Emails will be logged but not sent.");
-            transporter = createFakeTransporter() as any;
-            emailEnabled = true;
-          } else {
-            transporter = null;
-          }
+          transporter = null;
         } else {
           console.log("SMTP server is ready to send emails");
           emailEnabled = true;
@@ -70,15 +72,7 @@ function initEmailTransporter() {
       console.error("Failed to create email transporter:", error);
       lastEmailError = error.message || "Unknown error during setup";
       emailEnabled = false;
-      
-      // If we can't use the real transporter, use the fake one in development
-      if (process.env.NODE_ENV !== 'production') {
-        console.log("⚠️ Using fake email transport for development. Emails will be logged but not sent.");
-        transporter = createFakeTransporter() as any;
-        emailEnabled = true;
-      } else {
-        transporter = null;
-      }
+      transporter = null;
     }
   } else {
     console.warn("Email credentials not provided. Email functionality will be disabled.");

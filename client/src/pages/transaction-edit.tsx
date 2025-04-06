@@ -10,6 +10,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
+// Define portfolio and investment interfaces
+interface Portfolio {
+  id: number;
+  name: string;
+  description?: string;
+  user_id: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string | null;
+}
+
+interface Investment {
+  id: number;
+  name: string;
+  symbol?: string;
+  type?: string;
+  amount: number;
+  current_value: number;
+  portfolio_id: number;
+  created_at?: string;
+  updated_at?: string | null;
+}
+
+interface Transaction {
+  id: number;
+  transactionType: string;
+  amount: number;
+  date: string;
+  notes?: string;
+  portfolioId: number;
+  investmentId: number | null;
+}
+
 export default function TransactionEdit() {
   const { id } = useParams();
   const [, navigate] = useLocation();
@@ -23,20 +56,20 @@ export default function TransactionEdit() {
   });
 
   // Fetch portfolios for dropdown
-  const { data: portfolios } = useQuery({
+  const { data: portfolios = [] } = useQuery<Portfolio[]>({
     queryKey: ['/api/portfolios'],
     staleTime: 60000
   });
 
   // Fetch investments for the selected portfolio
-  const { data: investments } = useQuery({
+  const { data: investments = [] } = useQuery<Investment[]>({
     queryKey: ['/api/investments', formData.portfolioId ? { portfolioId: formData.portfolioId } : null],
     enabled: !!formData.portfolioId,
     staleTime: 30000
   });
 
   // Fetch transaction data if editing existing transaction
-  const { data: transaction, isLoading } = useQuery({
+  const { data: transaction, isLoading } = useQuery<Transaction>({
     queryKey: ['/api/transactions', id],
     enabled: !!id,
     staleTime: 30000
@@ -56,13 +89,13 @@ export default function TransactionEdit() {
   }, [transaction]);
 
   // Handle form changes
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   // Handle select changes
-  const handleSelectChange = (name, value) => {
+  const handleSelectChange = (name: string, value: string) => {
     if (name === "portfolioId" && value !== formData.portfolioId) {
       // Reset investment selection when portfolio changes
       setFormData(prev => ({ ...prev, [name]: value, investmentId: "" }));
@@ -71,21 +104,22 @@ export default function TransactionEdit() {
     }
   };
 
+  // Define transaction payload type
+  interface TransactionPayload {
+    transactionType: string;
+    amount: number;
+    notes: string;
+    portfolioId: number;
+    investmentId: number | null;
+  }
+
   // Create or update transaction
   const mutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (data: TransactionPayload) => {
       if (id) {
-        return apiRequest(`/api/transactions/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
+        return apiRequest('PATCH', `/api/transactions/${id}`, data);
       } else {
-        return apiRequest('/api/transactions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
+        return apiRequest('POST', '/api/transactions', data);
       }
     },
     onSuccess: () => {
@@ -96,7 +130,7 @@ export default function TransactionEdit() {
       });
       navigate("/transactions");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: `Failed to ${id ? "update" : "create"} transaction: ${error.message}`,
@@ -105,11 +139,12 @@ export default function TransactionEdit() {
     }
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      ...formData,
+    const payload: TransactionPayload = {
+      transactionType: formData.transactionType,
       amount: parseFloat(formData.amount),
+      notes: formData.notes,
       portfolioId: parseInt(formData.portfolioId),
       investmentId: formData.investmentId ? parseInt(formData.investmentId) : null
     };
@@ -183,7 +218,7 @@ export default function TransactionEdit() {
                   <SelectValue placeholder="Select portfolio" />
                 </SelectTrigger>
                 <SelectContent>
-                  {portfolios?.map((portfolio) => (
+                  {portfolios.map((portfolio: Portfolio) => (
                     <SelectItem key={portfolio.id} value={portfolio.id.toString()}>
                       {portfolio.name}
                     </SelectItem>
@@ -204,7 +239,7 @@ export default function TransactionEdit() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="0">None (Portfolio-level transaction)</SelectItem>
-                  {investments?.map((investment) => (
+                  {investments.map((investment: Investment) => (
                     <SelectItem key={investment.id} value={investment.id.toString()}>
                       {investment.name}
                     </SelectItem>
